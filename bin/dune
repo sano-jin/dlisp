@@ -1,0 +1,10 @@
+(menhir
+ (modules parser))
+
+(ocamllex lexer)
+
+(executable
+ (name main)
+ (public_name py)
+ (libraries py.util)
+ )

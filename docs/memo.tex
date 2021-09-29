@@ -1,0 +1,135 @@
+% Created 2021-09-27 Mon 23:04
+% Intended LaTeX compiler: pdflatex
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{grffile}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\author{Jin SANO}
+\date{\today}
+\title{Design and implementation of a pure functional language with GDT (Graph Data Type)}
+\hypersetup{
+ pdfauthor={Jin SANO},
+ pdftitle={Design and implementation of a pure functional language with GDT (Graph Data Type)},
+ pdfkeywords={},
+ pdfsubject={},
+ pdfcreator={Emacs 27.2 (Org mode 9.4.4)}, 
+ pdflang={English}}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+
+\section{Introduction}
+\label{sec:orga5b7697}
+
+Functional languages feature only tree (ADT) as a data.
+\begin{itemize}
+\item \texttt{let rec} can create a cyclic data, but it is limited and cannot be pattern-matched as a graph.
+\begin{itemize}
+\item i.e. it (just) creates an infinite graph in a user point of view
+\item (<-> implementation. Especially, the virtual machine).
+\end{itemize}
+\end{itemize}
+
+
+However, we often desire of using a more powerful data structures (e.g. Queue)
+for the efficiency in the execution of a program
+or to write program easily.
+Thus, we introduced GDT, graph data type, which is an extension of the former ADT (algebraic data type).
+
+There are two main difficulties on achieving this.
+\begin{enumerate}
+\item How should we \textbf{implement a pure with graph} as a primary data structure (or can't we?).
+\item How can we apply the \textbf{type system} (or can't we?)
+\end{enumerate}
+
+
+\subsection{The design choice we made in GDT (graph data type)}
+\label{sec:orge66adc9}
+
+There are many choices in designing this.
+\begin{enumerate}
+\item Is Directed or Not-directed?
+\item Is rooted?
+\item Is DAG only?
+\item Is hyperlink allowed?
+\item Is (the incoming) link ordered?
+\begin{itemize}
+\item For example, should we distinguish the graph which is
+a. Node \texttt{A} and \texttt{B} are pointing \texttt{C}. i.e. \texttt{(A(x), B(x), x -> c)}.
+b. Node \texttt{B} and \texttt{A} are pointing \texttt{C}. i.e. \texttt{(B(x), A(x), x -> C)}.
+\end{itemize}
+\end{enumerate}
+
+
+I chose the following graph AT THIS TIME
+(I possibly change my mind later. The final goal may be the (hyper)lmntal graph).
+\begin{enumerate}
+\item Directed (since ADT (=tree) is directed)
+\item Rooted.
+\item Only DAG is allowed in the pattern matching.
+\begin{itemize}
+\item This is JUST A DESIGN CHOICE.
+\begin{itemize}
+\item We will possibly extend it later.
+\end{itemize}
+\item Note cycle is still allowed in the generated graph (i.e. GDT is a super set of ADT)
+\end{itemize}
+\item Hypergraph
+(if we disallow hyperlinks, we can only treat tree,
+since the incoming link is allowed to write once for each node due to the constraint below)
+\item Incoming link is not ordered.
+\begin{itemize}
+\item It is allowed to write once for each node. e.g. \texttt{x -> P(...)}.
+\item c.f. ADT (= tree) has only one (unordered) incoming link.
+\end{itemize}
+\end{enumerate}
+
+
+\subsection{Possible usecases of GDT}
+\label{sec:orgb686864}
+Our primary motivative example is a Queue (FOR NOW).
+\begin{itemize}
+\item Queue should be able to add (and possibly access and remove) an element to the last of it with cost \(O(1)\).
+\end{itemize}
+
+
+There are two ways to implement this in the former functional languages.
+\begin{enumerate}
+\item We can implement this using two stacks (lists).
+\begin{itemize}
+\item It anables to add/access/remove the last element in \(O(1)\), 
+if we amortize the costs.
+\item However, it cannot always sure the cost (\(O(1)\)).
+\item and it generates intermediate data
+(we need two stacks. in other words, we should pay DOUBLE cost).
+\end{itemize}
+\item We can implmenent this in IMPERATIVE manner (with side-effects).
+\begin{itemize}
+\item This is not pure and is not welcomed.
+\begin{itemize}
+\item side-effects makes things difficult for a programmer.
+\item side-effects makes it difficult to read a program.
+\item side-effects makes it difficult to test (Unit test, Integration test).
+\end{itemize}
+\end{itemize}
+\end{enumerate}
+
+
+GDT let us to define and use a \(O(1)\) and pure queue, which was not possible
+in the former languages (not just the functinal languages but ALL).
+
+The other usecase is a skip-list.
+(I am looking for other examples. Please help me)
+\end{document}
