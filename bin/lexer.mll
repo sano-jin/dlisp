@@ -18,16 +18,15 @@ let alnum_symbol = alnum | symbol
 (* 改行後のスペースを indent で読んだ後に呼ばれる Lexer *)
 rule token = parse
   (* Operators *)
-  | '.'               { DOT }
-  | '''               { QUOTE }
+  | '\'' { QUOTE }
 
   (* Parentheses *)
-  | '('               { LPAREN }
-  | ')'               { RPAREN }
+  | '('  { LPAREN }
+  | ')'  { RPAREN }
   
   (* reserved names *)
-  | "#t"            { TRUE }
-  | "#f"            { FALSE }
+  | "#t" { TRUE }
+  | "#f" { FALSE }
 
   (* Number *)
   | digit+

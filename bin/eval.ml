@@ -57,5 +57,6 @@ let rec eval env uftree =
       in
       match !head_ref with
       | Nil -> Nil
-      | Dot value_ref -> eval env !value_ref
-      | Cons ("+", node_ref) -> node_ref)
+      | Cons (value_ref, node_ref) ->
+          (match !value with Atom "+" -> list_of_node_refs) node_ref
+          * hge higeh hige)
