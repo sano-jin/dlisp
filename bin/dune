@@ -5,6 +5,6 @@
 
 (executable
  (name main)
- (public_name py)
- (libraries py.util)
+ (public_name dlisp)
+ (libraries dlisp.util)
  )

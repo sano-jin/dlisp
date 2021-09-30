@@ -1,1 +1,0 @@
-print('hoge' * 3)

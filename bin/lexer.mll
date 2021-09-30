@@ -3,87 +3,57 @@
 {
   open Parser
   exception SyntaxError of string
-
-  open Lexing_aux
-
 }
 
 let space = [' ' '\t']
 let digit = ['0'-'9']
 let alpha = ['A'-'Z' 'a'-'z' '_']
-let alnum = digit | alpha | '\''
+let alnum = digit | alpha
 let newline = '\r' | '\n' | "\r\n"
+let symbol = ['!' '#' '$' '%' '&' '|' '*' '+' '-' '/' ':' '<' '=' '>' '?' '@' '^' '_' '~' '"']
+let alpha_symbol = alpha | symbol
+let alnum_symbol = alnum | symbol
+
 
 (* 改行後のスペースを indent で読んだ後に呼ばれる Lexer *)
 rule token = parse
-  (* Number *)
-  | digit+
-    { let str = Lexing.lexeme lexbuf in
-      INT (int_of_string str) }
-  
   (* Operators *)
-  | '+'               { PLUS }
-  | '-'               { MINUS }
-  | '*'               { ASTERISK }
-  | '<'               { LT }
-  | '>'               { GT }
-  | ':'               { COL }
   | '.'               { DOT }
-  | ','               { COMMA }
-  | '='               { EQ }
-  | "=="              { EQEQ }
-  | "!="              { NEQ }
 
   (* Parentheses *)
   | '('               { LPAREN }
   | ')'               { RPAREN }
   
   (* reserved names *)
-  | "true"            { TRUE }
-  | "false"           { FALSE }
-  | "while"           { WHILE }
-  | "pass"            { PASS }
-  | "is"              { IS }
-  | "not"             { NOT }
-  | "is" space+ "not" { ISNOT }
-  | "if"              { IF }
-  | "elif"            { ELIF }
-  | "else"            { ELSE }
-  | "lambda"          { LAMBDA }
-  | "def"             { DEF }
-  | "class"           { CLASS }
-  | "nonlocal"        { NONLOCAL }
-  | "return"          { RETURN }
-  | "try"             { TRY }
-  | "except"          { EXCEPT }
-  | "as"              { AS }
-  | "raise"           { RAISE }
-  | "break"           { BREAK }
-  | "continue"        { CONTINUE }
-  | "import"          { IMPORT }
-  | "from"            { FROM }
+  | "#t"            { TRUE }
+  | "#f"            { FALSE }
 
-  (* variable *)
-  | alpha alnum*
-    { VAR (Lexing.lexeme lexbuf) }
+  (* Number *)
+  | digit+
+    { let str = Lexing.lexeme lexbuf in
+      INT (int_of_string str) }
   
+  (* Atom *)
+  | alpha_symbol alnum_symbol*
+    { ATOM (Lexing.lexeme lexbuf) }
+    
+  (* string *)
+  | '"' [^ '\'']* '"'
+    { let str = Lexing.lexeme lexbuf in
+      STRING (String.sub str 1 @@ String.length str - 2)
+    }
+
   (* end of file *)
   | eof       { EOF }
 
   (* spaces *)
   | space+    { token lexbuf }
 
-  (* new line. call the [indent] tokenizer *)
-  | newline  { Lexing.new_line lexbuf; indent lexbuf }
+  (* new line *)
+  | newline  { Lexing.new_line lexbuf; token lexbuf }
 
-  (* comments *)
-  | '#' [^ '\n']*  { token lexbuf }
-
-  (* string *)
-  | ''' [^ '\'']* '\''
-    { let str = Lexing.lexeme lexbuf in
-      STRING (String.sub str 1 @@ String.length str - 2)
-    }
+  (* comment *)
+  | ";;" [^ '\n']*  { token lexbuf }
 
   | _
     {
@@ -97,24 +67,6 @@ rule token = parse
       raise @@ SyntaxError message
     }
 
-
-(* 改行があった場合に直後に呼ばれる Lexer *)
-and indent = parse
-  (* blank line *)
-  | space* newline { Lexing.new_line lexbuf; indent lexbuf }
-
-  (* blank line with a comment *)
-  | space* '#' [^ '\n']* newline { Lexing.new_line lexbuf; indent lexbuf }
-
-  (* indent (assuming that the next comming token is not just a space/newline/comment) *)
-  | space*
-    { let indent_level =
-        let pos = lexbuf.lex_curr_p in
-        (* the number of characters from the beginning of the line*)
-        pos.pos_cnum - pos.pos_bol
-      in
-      emit_indent indent_level
-     }
 
 
  

@@ -2,7 +2,8 @@
 
 open Eval
 open Syntax
+open Parsing
 
 let () =
-  let value = eval [] @@ read_and_parse Sys.argv.(1) "__main__" in
+  let value = eval [] @@ read_and_parse Sys.argv.(1) in
   print_endline @@ string_of_value value
