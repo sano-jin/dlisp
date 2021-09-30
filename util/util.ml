@@ -17,6 +17,9 @@ module ResultExtra = Result_extra
 module DebugPrint = Debug_print
 (** load functions for debug printing *)
 
+module UnionFind = Union_find
+(** load a module for union find *)
+
 (** その他の共用関数 *)
 
 (** 入出力のための関数 *)
@@ -39,3 +42,9 @@ let explode = List.of_seq <. String.to_seq
 let implode = String.of_seq <. List.to_seq
 
 let update_ref f r = r := f !r
+
+let unique =
+  let counter = ref 0 in
+  fun () ->
+    incr counter;
+    !counter

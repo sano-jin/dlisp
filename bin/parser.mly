@@ -2,6 +2,7 @@
      
 %{
   open Syntax
+  open Util
 %}
 
 %token <string> ATOM	(* x, y, abc, ... *)
@@ -10,6 +11,7 @@
 
 (* operators *)
 %token DOT		(* '.' *)
+%token QUOTE		(* '\'' *)
 		       
 (* Parentheses *)
 %token LPAREN		(* '(' *)
@@ -64,12 +66,17 @@ exp:
 
   | LPAREN list_inner RPAREN
     { let nil_ref = ref Nil in
-      DList (dlist_of_list $2 nil_ref, nil_ref, [])
+      DList (unique (), dlist_of_list $2 nil_ref, nil_ref, [])
     }
 
   | LPAREN list_inner DOT exp RPAREN
     { let tail_ref = ref (Dot (ref $4)) in
-      DList (dlist_of_list $2 tail_ref, tail_ref, [])
+      DList (unique (), dlist_of_list $2 tail_ref, tail_ref, [])
+    }
+
+  | QUOTE exp
+    { let nil_ref = ref Nil in
+      DList (unique (), dlist_of_list [Atom "quote"; $2] nil_ref, nil_ref, [])
     }
 ;
 

@@ -19,6 +19,7 @@ let alnum_symbol = alnum | symbol
 rule token = parse
   (* Operators *)
   | '.'               { DOT }
+  | '''               { QUOTE }
 
   (* Parentheses *)
   | '('               { LPAREN }

@@ -3,10 +3,13 @@
 open Util
 open Util.ListExtra
 
+(** coherence *)
+type coherence = M | E | S | I
+
 (** value *)
 type value =
   | Atom of string  (** variable e.g. x *)
-  | DList of node ref * node ref * (node ref * node) list
+  | DList of int * node ref * node ref * node
   | Number of int  (** integer value e.g. 17 *)
   | Bool of bool  (** boolean value e.g. true *)
   | String of string  (** string value e.g. "hellow world!" *)
@@ -18,7 +21,7 @@ type env = (string * value) list
 
 let rec string_of_value = function
   | Atom atom -> atom
-  | DList (node_ref, _, _) -> (
+  | DList (_, node_ref, _, _) -> (
       match strings_of_node !node_ref with
       | strs, None -> "(" ^ String.concat " " strs ^ ")"
       | strs, Some str -> "(" ^ String.concat " " strs ^ " . " ^ str ^ ")")
