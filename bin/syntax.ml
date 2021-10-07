@@ -2,25 +2,27 @@
 
 open Util.ListExtra
 
-(** coherence *)
-type coherence = M | E | S | I
-
 (** value *)
 type value =
   | Atom of string  (** variable e.g. x *)
-  | DList of int * node ref * node ref * node
+  | DList of node ref * node ref * history_node ref
+      (** DList (head_ref, tail_ref, history_ref) *)
   | Number of int  (** integer value e.g. 17 *)
   | Bool of bool  (** boolean value e.g. true *)
   | String of string  (** string value e.g. "hellow world!" *)
 
 and node = Cons of value * node ref | Nil
 
+and history_node =
+  | Main of (node ref * node) * history_node ref option
+  | Sub of (node ref * node) * history_node ref
+
 type env = (string * value) list
 (** environment e.g. [("x", 1); ("y", 2)]*)
 
 let rec string_of_value = function
   | Atom atom -> atom
-  | DList (_, node_ref, _, _) ->
+  | DList (node_ref, _, _) ->
       "(" ^ String.concat " " (strings_of_node !node_ref) ^ ")"
   | Number number -> string_of_int number
   | Bool bool -> string_of_bool bool
@@ -29,6 +31,21 @@ let rec string_of_value = function
 and strings_of_node = function
   | Cons (value, node_ref) -> string_of_value value :: strings_of_node !node_ref
   | Nil -> []
+
+let string_of_node = function
+  | Nil -> "[]"
+  | Cons (value, _) -> "[" ^ string_of_value value ^ "|-]"
+
+let rec string_of_history history_ref =
+  match !history_ref with
+  | Main ((addr, value), None) ->
+      "Main (" ^ string_of_node !addr ^ " <- " ^ string_of_node value ^ ")."
+  | Main ((addr, value), Some next_ref) ->
+      "Main (" ^ string_of_node !addr ^ " <- " ^ string_of_node value ^ ")"
+      ^ " -> " ^ string_of_history next_ref
+  | Sub ((addr, value), prev_ref) ->
+      "Sub (" ^ string_of_node !addr ^ " <- " ^ string_of_node value ^ ")"
+      ^ " -> " ^ string_of_history prev_ref
 
 let string_of_env env =
   let string_of_binding (var, value) =
@@ -41,7 +58,7 @@ let extract_number = function
   | Number number -> number
   | value ->
       failwith @@ "TypeError: " ^ string_of_value value
-      ^ " is valueected to be a number"
+      ^ " is expected to be a number"
 
 let cons_of value tail = ref (Cons (value, tail))
 
@@ -51,3 +68,10 @@ let rec list_of_node_ref node_ref =
   match !node_ref with
   | Cons (value_ref, node_ref) -> value_ref :: list_of_node_ref node_ref
   | Nil -> []
+
+(** 値が DList だった場合に，OCaml リストに変換して返す．  *)
+let extract_dlist = function
+  | DList (head_ref, _, _) -> list_of_node_ref head_ref
+  | value ->
+      failwith @@ "TypeError: " ^ string_of_value value
+      ^ " is expected to be a dlist"

@@ -9,6 +9,8 @@ let id x = x
 
 let const x _ = x
 
+let const2 _ y = y
+
 let curry f x y = f (x, y)
 
 let uncurry f (x, y) = f x y
