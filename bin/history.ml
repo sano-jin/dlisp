@@ -27,15 +27,15 @@ let rec traverse_main_stream parent_ref this_ref =
 Master branch に辿り着いたら，[traverse_main_stream] を実行し，
 その後に sub stream を順実行しながらこれを main stream 化する．
 *)
-let rec traverse_history next_ref this_ref =
+let rec traverse_history next_ref_opt this_ref =
   match !this_ref with
   | Sub (id, (addr, value), parent_ref) ->
       traverse_history (Some this_ref) parent_ref;
       let old_value = !addr in
       addr := value;
-      this_ref := Main (id, (addr, old_value), next_ref)
+      this_ref := Main (id, (addr, old_value), next_ref_opt)
   | Main (id, addr_value, old_next_ref_opt) ->
       (match old_next_ref_opt with
       | None -> ()
       | Some old_next_ref -> traverse_main_stream this_ref old_next_ref);
-      this_ref := Main (id, addr_value, next_ref)
+      this_ref := Main (id, addr_value, next_ref_opt)
