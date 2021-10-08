@@ -14,8 +14,8 @@ type value =
 and node = Cons of value * node ref | Nil
 
 and history_node =
-  | Main of (node ref * node) * history_node ref option
-  | Sub of (node ref * node) * history_node ref
+  | Main of int * (node ref * node) * history_node ref option
+  | Sub of int * (node ref * node) * history_node ref
 
 type env = (string * value) list
 (** environment e.g. [("x", 1); ("y", 2)]*)
@@ -38,14 +38,15 @@ let string_of_node = function
 
 let rec string_of_history history_ref =
   match !history_ref with
-  | Main ((addr, value), None) ->
-      "Main (" ^ string_of_node !addr ^ " <- " ^ string_of_node value ^ ")."
-  | Main ((addr, value), Some next_ref) ->
-      "Main (" ^ string_of_node !addr ^ " <- " ^ string_of_node value ^ ")"
-      ^ " -> " ^ string_of_history next_ref
-  | Sub ((addr, value), prev_ref) ->
-      "Sub (" ^ string_of_node !addr ^ " <- " ^ string_of_node value ^ ")"
-      ^ " -> " ^ string_of_history prev_ref
+  | Main (id, (addr, value), None) ->
+      string_of_int id ^ ":Main (" ^ string_of_node !addr ^ " <- "
+      ^ string_of_node value ^ ")."
+  | Main (id, (addr, value), Some next_ref) ->
+      string_of_int id ^ ":Main (" ^ string_of_node !addr ^ " <- "
+      ^ string_of_node value ^ ")" ^ " -> " ^ string_of_history next_ref
+  | Sub (id, (addr, value), prev_ref) ->
+      string_of_int id ^ ":Sub (" ^ string_of_node !addr ^ " <- "
+      ^ string_of_node value ^ ")" ^ " -> " ^ string_of_history prev_ref
 
 let string_of_env env =
   let string_of_binding (var, value) =

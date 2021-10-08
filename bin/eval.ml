@@ -8,15 +8,19 @@ open Util
 *)
 let rec traverse_main_stream parent_ref this_ref =
   match !this_ref with
-  | Sub ((addr, value), _) ->
-      failwith @@ "substream should not be reached from main stream: Sub ("
-      ^ string_of_node !addr ^ " := " ^ string_of_node value ^ ")"
-  | Main ((addr, value), next_ref_opt) -> (
+  | Sub _ ->
+      failwith @@ "substream should not be reached from main stream: "
+      ^ string_of_history this_ref
+  | Main (id, (addr, value), next_ref_opt) -> (
+      prerr_endline @@ "    . traversing main stream: "
+      ^ string_of_history this_ref;
       let old_value = !addr in
       addr := value;
-      this_ref := Sub ((addr, old_value), parent_ref);
+      this_ref := Sub (id, (addr, old_value), parent_ref);
       match next_ref_opt with
-      | None -> ()
+      | None ->
+          prerr_endline "    .";
+          ()
       | Some next_ref -> traverse_main_stream this_ref next_ref)
 
 (** 履歴を辿る．
@@ -25,17 +29,26 @@ Master branch に辿り着いたら，traverse_main_stream を実行し，
 *)
 let rec traverse_history next_ref this_ref =
   match !this_ref with
-  | Sub ((addr, value), parent_ref) ->
+  | Sub (id, (addr, value), parent_ref) ->
       traverse_history (Some this_ref) parent_ref;
       let old_value = !addr in
       addr := value;
-      this_ref := Main ((addr, old_value), next_ref)
-  | Main ((addr, value), old_next_ref_opt) -> (
+      this_ref := Main (id, (addr, old_value), next_ref)
+  | Main (id, (addr, value), old_next_ref_opt) -> (
       match old_next_ref_opt with
       | None -> ()
       | Some old_next_ref ->
+          (* TODO: ここの更新操作は本当に必要なのか？ *)
           traverse_main_stream this_ref old_next_ref;
-          this_ref := Main ((addr, value), next_ref))
+          this_ref := Main (id, (addr, value), next_ref))
+(*
+   | Main ((addr, value), old_next_ref_opt) -> (
+       match old_next_ref_opt with
+       | None -> ()
+       | Some old_next_ref ->
+           traverse_main_stream this_ref old_next_ref;
+           this_ref := Main ((addr, value), next_ref))
+*)
 
 (** The evaluator *)
 let rec eval env = function
@@ -47,7 +60,15 @@ let rec eval env = function
       in
       (match value with
       | DList (_, _, history_ref) as this_dlist ->
-          traverse_history None history_ref
+          prerr_endline @@ "    >>> " ^ id ^ " = ";
+          prerr_endline @@ "    >>>   updating: "
+          ^ string_of_history history_ref;
+
+          traverse_history None history_ref;
+
+          prerr_endline @@ "    >>>   updated : "
+          ^ string_of_history history_ref;
+          prerr_endline @@ "    >>>   ---> " ^ string_of_value this_dlist
       | _ -> ());
       value
   | Number _ as number -> number
@@ -88,12 +109,12 @@ let rec eval env = function
           match (eval env list1, eval env list2) with
           | ( DList (head_ref1, tail_ref1, history_ref1),
               DList (head_ref2, tail_ref2, _) ) -> (
-              match !history_ref with
-              | Main (operation, None) ->
+              match !history_ref1 with
+              | Main (id, operation, None) ->
                   let this_history_ref =
-                    ref @@ Main ((tail_ref1, !tail_ref1), None)
+                    ref @@ Main (unique (), (tail_ref1, !tail_ref1), None)
                   in
-                  history_ref1 := Main (operation, Some this_history_ref);
+                  history_ref1 := Main (id, operation, Some this_history_ref);
                   tail_ref1 := !head_ref2;
                   DList (head_ref1, tail_ref2, this_history_ref)
               | _ ->

@@ -36,9 +36,9 @@
      (let ((z (++ x '(7 8 9))))
        (let ((w (++ y '(10 11 12))))
   	 (begin
-  	   (print w)
-   	   (print z)
   	   (print y)
+   	   (print z)
+  	   (print w)
   	   )
   	 )
        )

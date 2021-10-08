@@ -2,6 +2,7 @@
      
 %{
   open Syntax
+  open Util
 %}
 
 %token <string> ATOM	(* x, y, abc, ... *)
@@ -64,14 +65,19 @@ exp:
 
   | LPAREN list_inner RPAREN
     { let nil_ref = ref Nil in
+      (*
+      let init_nil = Cons (Atom "root", nil_ref) in
+      *)
+      let init_nil = Cons (Atom "root", nil_ref) in
       DList (dlist_of_list $2 nil_ref, nil_ref,
-             ref @@ Main ((nil_ref, Cons (Atom "root", nil_ref)), None))
+             ref @@ Main (unique (), (nil_ref, init_nil), None))
     }
 
   | QUOTE exp
     { let nil_ref = ref Nil in
+      let init_nil = Cons (Atom "root", nil_ref) in
       DList (dlist_of_list [Atom "quote"; $2] nil_ref, nil_ref,
-             ref @@ Main ((nil_ref, Cons (Atom "root", nil_ref)), None))
+             ref @@ Main (unique (), (nil_ref, init_nil), None))
     }
 ;
 
