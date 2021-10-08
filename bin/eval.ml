@@ -18,9 +18,7 @@ let rec traverse_main_stream parent_ref this_ref =
       addr := value;
       this_ref := Sub (id, (addr, old_value), parent_ref);
       match next_ref_opt with
-      | None ->
-          prerr_endline "    .";
-          ()
+      | None -> prerr_endline "    ."
       | Some next_ref -> traverse_main_stream this_ref next_ref)
 
 (** 履歴を辿る．
@@ -34,21 +32,11 @@ let rec traverse_history next_ref this_ref =
       let old_value = !addr in
       addr := value;
       this_ref := Main (id, (addr, old_value), next_ref)
-  | Main (id, (addr, value), old_next_ref_opt) -> (
-      match old_next_ref_opt with
+  | Main (id, (addr, value), old_next_ref_opt) ->
+      (match old_next_ref_opt with
       | None -> ()
-      | Some old_next_ref ->
-          (* TODO: ここの更新操作は本当に必要なのか？ *)
-          traverse_main_stream this_ref old_next_ref;
-          this_ref := Main (id, (addr, value), next_ref))
-(*
-   | Main ((addr, value), old_next_ref_opt) -> (
-       match old_next_ref_opt with
-       | None -> ()
-       | Some old_next_ref ->
-           traverse_main_stream this_ref old_next_ref;
-           this_ref := Main ((addr, value), next_ref))
-*)
+      | Some old_next_ref -> traverse_main_stream this_ref old_next_ref);
+      this_ref := Main (id, (addr, value), next_ref)
 
 (** The evaluator *)
 let rec eval env = function
