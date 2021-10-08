@@ -11,7 +11,7 @@
 (package
  (name dlisp)
  (synopsis "dlisp")
- (description "A minimal interpreter")
+ (description "A minimal interpreter of DLisp")
  (depends
   ; (ounit :with-test)
   (menhir (>= 20210419))
