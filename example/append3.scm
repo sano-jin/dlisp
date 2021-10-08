@@ -19,29 +19,30 @@
 ;;
 
 
-(let ((x '(1 2 3)))
-  (let ((y (++ x '(4 5 6))))
-    (let ((z (++ x '(7 8 9))))
-      (begin
-	(print y)
-	(print z)
-	)
-      )
-    )
-  )
-
-
 ;; (let ((x '(1 2 3)))
 ;;   (let ((y (++ x '(4 5 6))))
 ;;     (let ((z (++ x '(7 8 9))))
-;;       (let ((w (++ y '(10 11 12))))
-;; 	(begin
-;; 	  (print z)
-;; 	  (print y)
-;; 	  (print w)
-;; 	  )
-;; 	)
+;;       (begin
+;;  	(print z)
+;;  	(print y)
+;;  	)
 ;;       )
 ;;     )
 ;;   )
+
+
+ (let ((x '(1 2 3)))
+   (let ((y (++ x '(4 5 6))))
+     (let ((z (++ x '(7 8 9))))
+       (let ((w (++ y '(10 11 12))))
+  	 (begin
+  	   (print w)
+   	   (print z)
+  	   (print y)
+  	   )
+  	 )
+       )
+     )
+   )
+;;  
 ;; 

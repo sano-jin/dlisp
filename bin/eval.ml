@@ -12,8 +12,10 @@ let rec traverse_main_stream parent_ref this_ref =
       failwith @@ "substream should not be reached from main stream: Sub ("
       ^ string_of_node !addr ^ " := " ^ string_of_node value ^ ")"
   | Main ((addr, value), next_ref_opt) -> (
+      (*
       prerr_endline @@ "traversing main stream: Main (" ^ string_of_node !addr
       ^ " := " ^ string_of_node value ^ ")";
+  *)
       let old_value = !addr in
       addr := value;
       this_ref := Sub ((addr, old_value), parent_ref);
@@ -25,21 +27,27 @@ let rec traverse_main_stream parent_ref this_ref =
 Master branch に辿り着いたら，traverse_main_stream を実行し，
 その後に sub stream を順実行しながらこれを main stream 化する．
 *)
-let rec traverse_history this_ref =
+let rec traverse_history next_ref this_ref =
   match !this_ref with
-  | Sub ((addr, value), prev_ref) ->
+  | Sub ((addr, value), parent_ref) ->
+      (*
       prerr_endline @@ "traversing: Sub (" ^ string_of_node !addr ^ " := "
       ^ string_of_node value ^ ")";
-      traverse_history prev_ref;
+  *)
+      traverse_history (Some this_ref) parent_ref;
       let old_value = !addr in
       addr := value;
-      this_ref := Main ((addr, old_value), Some prev_ref)
+      this_ref := Main ((addr, old_value), next_ref)
   | Main ((addr, value), next_ref_opt) -> (
+      (*
       prerr_endline @@ "traversing: Main (" ^ string_of_node !addr ^ " := "
       ^ string_of_node value ^ ")";
+  *)
       match next_ref_opt with
       | None -> ()
-      | Some next_ref -> traverse_main_stream this_ref next_ref)
+      | Some next_ref ->
+          traverse_main_stream this_ref next_ref;
+          this_ref := Main ((addr, value), None))
 
 (** The evaluator *)
 let rec eval env = function
@@ -50,15 +58,28 @@ let rec eval env = function
         | None -> failwith @@ "variable " ^ id ^ " not found"
       in
       (match value with
-      | DList (_, _, history_ref) -> traverse_history history_ref
+      | DList (_, _, history_ref) as this_dlist ->
+          prerr_endline @@ ">>> updating: " ^ string_of_history history_ref;
+
+          traverse_history None history_ref;
+
+          prerr_endline @@ ">>> updated: "
+          ^ string_of_history history_ref
+          ^ " this = " ^ string_of_value this_dlist
       | _ -> ());
       value
   | Number _ as number -> number
   | Bool _ as bool -> bool
   | String _ as string -> string
   | DList (head_ref, _, history_ref) as this_dlist -> (
+      prerr_endline @@ ">>> updating: " ^ string_of_history history_ref;
+
       (* 履歴を辿って，データを更新 *)
-      traverse_history history_ref;
+      traverse_history None history_ref;
+
+      prerr_endline @@ ">>> updated: "
+      ^ string_of_history history_ref
+      ^ " this = " ^ string_of_value this_dlist;
 
       (* 扱いやすさのために，差分リストを OCaml のリストに変換する．
          tail_ref の情報は用いずに，[] まで辿っている
@@ -75,8 +96,8 @@ let rec eval env = function
       | [ Atom "quote"; value ] -> value
       | Atom "begin" :: (_ :: _ as args) ->
           List.fold_left (eval env <.. const2) (Atom "void") args
-      | [ Atom "print"; args ] ->
-          let value = eval env args in
+      | [ Atom "print"; arg ] ->
+          let value = eval env arg in
           print_endline @@ string_of_value value;
           value
       | [ Atom "let"; binds; body ] ->
@@ -88,11 +109,15 @@ let rec eval env = function
           let env = List.map binding_of (extract_dlist binds) @ env in
           eval env body
       | [ Atom "++"; list1; list2 ] -> (
-          prerr_endline @@ string_of_value this_dlist;
+          (*
+                prerr_endline @@ string_of_value this_dlist;
+  *)
           match (eval env list1, eval env list2) with
           | ( DList (head_ref1, tail_ref1, history_ref1),
               DList (head_ref2, tail_ref2, _) ) -> (
+              (*
               prerr_endline @@ ">>> " ^ string_of_history history_ref1;
+  *)
               match !history_ref with
               | Main (operation, None) ->
                   let this_history_ref =
@@ -100,8 +125,10 @@ let rec eval env = function
                   in
                   history_ref1 := Main (operation, Some this_history_ref);
                   tail_ref1 := !head_ref2;
-                  prerr_endline @@ ">>> " ^ string_of_history this_history_ref;
-                  prerr_endline @@ ">>> " ^ string_of_history history_ref1;
+
+                  prerr_endline @@ "... " ^ string_of_history this_history_ref;
+                  prerr_endline @@ "... " ^ string_of_history history_ref1;
+
                   DList (head_ref1, tail_ref2, this_history_ref)
               | _ ->
                   failwith
