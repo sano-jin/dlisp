@@ -38,16 +38,16 @@ let rec traverse_history next_ref this_ref =
       let old_value = !addr in
       addr := value;
       this_ref := Main ((addr, old_value), next_ref)
-  | Main ((addr, value), next_ref_opt) -> (
+  | Main ((addr, value), old_next_ref_opt) -> (
       (*
       prerr_endline @@ "traversing: Main (" ^ string_of_node !addr ^ " := "
       ^ string_of_node value ^ ")";
   *)
-      match next_ref_opt with
+      match old_next_ref_opt with
       | None -> ()
-      | Some next_ref ->
-          traverse_main_stream this_ref next_ref;
-          this_ref := Main ((addr, value), None))
+      | Some old_next_ref ->
+          traverse_main_stream this_ref old_next_ref;
+          this_ref := Main ((addr, value), next_ref))
 
 (** The evaluator *)
 let rec eval env = function
@@ -138,36 +138,3 @@ let rec eval env = function
               @@ "both argments are expected to be lists with an append")
       | Atom op :: _ -> failwith @@ "operation " ^ op ^ " not implemented"
       | _ -> failwith @@ string_of_value this_dlist ^ " is not implemented")
-
-(*
-          (
-      (* 自分が読むための更新を行い，巻き戻しのための関数を返す *)
-      let rewinder =
-        match uf_find_opt my_id with
-        | None -> id (* not sharing *)
-        | Some owner_id ->
-            if owner_id = my_id then id (* Do nothing, if I am the owner *)
-            else (
-              (* 更新を行い，オーナーを自分に設定，後でこれらを戻すための関数を返す *)
-              (* オーナーを自分に設定 *)
-              uf_update_owner owner_id my_id;
-              (* 自分が更新する前の tail のデータを保存しておく *)
-              let tail = !tail_ref in
-              (* 自分のデータで更新する *)
-              tail_ref := redir;
-              (* 巻き戻しのための関数．引数をそのまま返す *)
-              fun value ->
-                (* オーナーを元のものに戻す *)
-                uf_update_owner owner_id my_id;
-                (* 自分が更新する前の tail のデータに戻す *)
-                tail_ref := tail;
-                value)
-      in
-      match !head_ref with
-      | Nil -> Nil
-      | Cons (value_ref, node_ref) ->
-          (match !value with Atom "+" -> list_of_node_refs) node_ref
-          * hge higeh hige)
-
-
-*)
