@@ -1,42 +1,8 @@
-(* eval.ml *)
+(** The evaluator *)
 
 open Syntax
 open Util
-
-(** Master branch を辿りながら順実行する．
-辿ってきた node は sub stream 化して逆順につなぐ．
-*)
-let rec traverse_main_stream parent_ref this_ref =
-  match !this_ref with
-  | Sub _ ->
-      failwith @@ "substream should not be reached from main stream: "
-      ^ string_of_history this_ref
-  | Main (id, (addr, value), next_ref_opt) -> (
-      prerr_endline @@ "    . traversing main stream: "
-      ^ string_of_history this_ref;
-      let old_value = !addr in
-      addr := value;
-      this_ref := Sub (id, (addr, old_value), parent_ref);
-      match next_ref_opt with
-      | None -> prerr_endline "    ."
-      | Some next_ref -> traverse_main_stream this_ref next_ref)
-
-(** 履歴を辿る．
-Master branch に辿り着いたら，traverse_main_stream を実行し，
-その後に sub stream を順実行しながらこれを main stream 化する．
-*)
-let rec traverse_history next_ref this_ref =
-  match !this_ref with
-  | Sub (id, (addr, value), parent_ref) ->
-      traverse_history (Some this_ref) parent_ref;
-      let old_value = !addr in
-      addr := value;
-      this_ref := Main (id, (addr, old_value), next_ref)
-  | Main (id, (addr, value), old_next_ref_opt) ->
-      (match old_next_ref_opt with
-      | None -> ()
-      | Some old_next_ref -> traverse_main_stream this_ref old_next_ref);
-      this_ref := Main (id, (addr, value), next_ref)
+open History
 
 (** The evaluator *)
 let rec eval env = function
@@ -48,6 +14,7 @@ let rec eval env = function
       in
       (match value with
       | DList (_, _, history_ref) as this_dlist ->
+          (* 差分リストだった場合は履歴を更新する *)
           prerr_endline @@ "    >>> " ^ id ^ " = ";
           prerr_endline @@ "    >>>   updating: "
           ^ string_of_history history_ref;
@@ -67,7 +34,7 @@ let rec eval env = function
       traverse_history None history_ref;
 
       (* 扱いやすさのために，差分リストを OCaml のリストに変換する．
-         tail_ref の情報は用いずに，[] まで辿っている
+         tail_ref の情報は用いずに，Nil まで辿っている
       *)
       let list = list_of_node_ref head_ref in
       let eval_binop_num f unit args =
@@ -110,6 +77,6 @@ let rec eval env = function
                   @@ "error: expected to be the latest version of the list")
           | _ ->
               failwith
-              @@ "both argments are expected to be lists with an append")
+              @@ "both argments are expected to be lists with an append op")
       | Atom op :: _ -> failwith @@ "operation " ^ op ^ " not implemented"
       | _ -> failwith @@ string_of_value this_dlist ^ " is not implemented")
