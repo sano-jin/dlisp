@@ -9,6 +9,7 @@ type value =
       (** DList (head_ref, tail_ref, history_ref) *)
   | Number of int  (** integer value e.g. 17 *)
   | Bool of bool  (** boolean value e.g. true *)
+  | Closure of string list * value * env  (** closure *)
   | String of string  (** string value e.g. "hellow world!" *)
 
 and node = Cons of value * node ref | Nil
@@ -17,7 +18,7 @@ and history_node =
   | Main of int * (node ref * node) * history_node ref option
   | Sub of int * (node ref * node) * history_node ref
 
-type env = (string * value) list
+and env = (string * value) list
 (** environment e.g. [("x", 1); ("y", 2)]*)
 
 let rec string_of_value = function
@@ -27,6 +28,7 @@ let rec string_of_value = function
   | Number number -> string_of_int number
   | Bool bool -> string_of_bool bool
   | String string -> string
+  | Closure _ -> "<closure>"
 
 and strings_of_node = function
   | Cons (value, node_ref) -> string_of_value value :: strings_of_node !node_ref
@@ -60,6 +62,12 @@ let extract_number = function
   | value ->
       failwith @@ "TypeError: " ^ string_of_value value
       ^ " is expected to be a number"
+
+let extract_variable = function
+  | Atom id -> id
+  | value ->
+      failwith @@ "TypeError: " ^ string_of_value value
+      ^ " is expected to be a variable"
 
 let cons_of value tail = ref (Cons (value, tail))
 

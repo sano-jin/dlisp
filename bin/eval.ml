@@ -19,7 +19,7 @@ let rec eval env = function
           prerr_endline @@ "    >>>   updating: "
           ^ string_of_history history_ref;
 
-          traverse_history None history_ref;
+          update history_ref;
 
           prerr_endline @@ "    >>>   updated : "
           ^ string_of_history history_ref;
@@ -29,9 +29,10 @@ let rec eval env = function
   | Number _ as number -> number
   | Bool _ as bool -> bool
   | String _ as string -> string
+  | Closure _ as closure -> closure
   | DList (head_ref, _, history_ref) as this_dlist -> (
       (* 履歴を辿って，データを更新 *)
-      traverse_history None history_ref;
+      update history_ref;
 
       (* 扱いやすさのために，差分リストを OCaml のリストに変換する．
          tail_ref の情報は用いずに，Nil まで辿っている
@@ -46,6 +47,11 @@ let rec eval env = function
       | Atom "+" :: args -> Number (eval_binop_num ( + ) 0 args)
       | Atom "*" :: args -> Number (eval_binop_num ( * ) 1 args)
       | [ Atom "quote"; value ] -> value
+      | [ Atom "lambda"; DList (arg_head_ref, _, arg_history_ref); body ] ->
+          update arg_history_ref;
+          let args = list_of_node_ref arg_head_ref in
+          let arg_strs = List.map extract_variable args in
+          Closure (arg_strs, body, env)
       | Atom "begin" :: (_ :: _ as args) ->
           List.fold_left (eval env <.. const2) (Atom "void") args
       | [ Atom "print"; arg ] ->
@@ -78,5 +84,11 @@ let rec eval env = function
           | _ ->
               failwith
               @@ "both argments are expected to be lists with an append op")
-      | Atom op :: _ -> failwith @@ "operation " ^ op ^ " not implemented"
-      | _ -> failwith @@ string_of_value this_dlist ^ " is not implemented")
+      | f :: args -> (
+          match eval env f with
+          | Closure (vars, body, env) ->
+              let arg_values = List.map (eval env) args in
+              let env = List.combine vars arg_values @ env in
+              eval env body
+          | f -> failwith @@ string_of_value f ^ " is expected to be a function"
+          ))
