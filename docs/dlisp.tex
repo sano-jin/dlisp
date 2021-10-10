@@ -1,6 +1,6 @@
-% Created 2021-10-10 Sun 23:19
+% Created 2021-10-10 Sun 23:54
 % Intended LaTeX compiler: pdflatex
-\documentclass{scrartcl}
+\documentclass[10pt, a4j, twocolumn]{scrartcl}
                \usepackage{amsmath}
                \usepackage{amssymb}
                \usepackage{xunicode}
@@ -48,7 +48,20 @@
 
 
 \section{概要}
-\label{sec:org3b2d91a}
+\label{sec:orge17563e}
+
+破壊的操作を試みる際に，
+事前にオブジェクト全体を複製するのではなく，
+操作の履歴を発行することで，
+過去のデータを復元できる手段を残しながら，
+最新のオブジェクトを手にいれるコストを最小化する手法を提案する．
+
+この手法が顕著に活かせる例として，
+アトムと差分リストのみからなる Lisp 派生言語 DLisp を実装した．
+DLisp は append が \(O(1)\) でできる（より正確にはアッカーマン関数の逆関数）．
+
+\section{背景}
+\label{sec:orgb9dad0a}
 
 従来のプログラミング言語におけるデータの持ち方の考え方
 \begin{description}
@@ -165,7 +178,7 @@
 
 
 \section{メモ}
-\label{sec:orgac7e368}
+\label{sec:org4e212c9}
 
 差分リストはリストよりも強力なデータ構造
 \begin{itemize}
@@ -178,7 +191,7 @@
 
 
 \section{2021/10/10}
-\label{sec:org19fafa5}
+\label{sec:org2fa92aa}
 
 提案手法は，単に共有物に対して破壊的操作を行っている場合は履歴を保持するというだけ．
 \begin{itemize}
@@ -254,19 +267,6 @@
 \begin{itemize}
 \item この場合，ground のように丸々コピーするよりも遥かに安価である（あって欲しい）
 \item しかし，そもそも lambda のエンコードの価値が実はあまりよくわからない（失礼！）から，これが最適化されることの意味もよくわからない．
-\end{itemize}
-\end{itemize}
-
-
-lmntal に関して何かやれば，それでもうほぼ新規性が保証される．とは個人的にはあまり思っていない．
-\begin{itemize}
-\item 学士・修士レベルではそうだと思うが．
-\item 例えば，lmntal-shapetype は structured-gamma との差分をめちゃめちゃ聞かれる．
-\item indexed-type は st-gamma にはないので（多分）これは新規性がある．
-\item が，これは lmntal とは全然関係ない話だと思う．
-\item 「他の言語で実現されていることを lmntal に導入する」というのは（lmntal 独自の特徴を活かせない限り）あまり旨味がなくて，「lmntal が実現していることを（そのままではうまくいかないので工夫して）他の言語に導入する」方が価値があると思っている．
-\begin{itemize}
-\item なぜ lmntal ではダメなの？に対する反論はしなくてはいけない（けどこれは研究室の意向と反発するように捉えられかねないのでかなり神経を削る．．．）
 \end{itemize}
 \end{itemize}
 \end{document}
