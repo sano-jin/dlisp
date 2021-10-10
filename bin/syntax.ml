@@ -28,7 +28,7 @@ let rec string_of_value = function
   | Number number -> string_of_int number
   | Bool bool -> string_of_bool bool
   | String string -> string
-  | Closure _ -> "<closure>"
+  | Closure (args, _, _) -> "(lambda (" ^ String.concat " " args ^ ") ...)"
 
 and strings_of_node = function
   | Cons (value, node_ref) -> string_of_value value :: strings_of_node !node_ref

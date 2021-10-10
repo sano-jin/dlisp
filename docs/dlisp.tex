@@ -1,0 +1,272 @@
+% Created 2021-10-10 Sun 23:19
+% Intended LaTeX compiler: pdflatex
+\documentclass{scrartcl}
+               \usepackage{amsmath}
+               \usepackage{amssymb}
+               \usepackage{xunicode}
+               \usepackage{fixltx2e}
+               \usepackage{zxjatype}
+               \usepackage[hiragino-dx]{zxjafont}
+               \usepackage{xltxtra}
+               \usepackage{graphicx}
+               \usepackage{longtable}
+               \usepackage{float}
+               \usepackage{wrapfig}
+               \usepackage{soul}
+               \usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{grffile}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\usepackage{style}
+\author{Jin SANO}
+\date{\today}
+\title{DLisp\\\medskip
+\large Differential List Processor}
+\hypersetup{
+ pdfauthor={Jin SANO},
+ pdftitle={DLisp},
+ pdfkeywords={},
+ pdfsubject={},
+ pdfcreator={Emacs 27.2 (Org mode 9.4.4)}, 
+ pdflang={English}}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+
+
+
+\section{概要}
+\label{sec:org3b2d91a}
+
+従来のプログラミング言語におけるデータの持ち方の考え方
+\begin{description}
+\item[{C/C++ などの古典的な手続き型言語}] 破壊的更新が標準
+\begin{itemize}
+\item \texttt{const} が明示的に記述されていないと破壊的更新の可能性を否定できない
+\item 共有されているオブジェクトでもお構いなしに破壊的更新を行う
+\item どうしても「元のオブジェクト」が欲しくなる場合は，ユーザが明示的にその実装を行う必要がある
+\begin{itemize}
+\item 再帰的にコピーを行う関数を実装するものと思われる
+\end{itemize}
+\end{itemize}
+\item[{Rust などの比較的新しい手続き型言語}] 破壊的更新を行うが，所有権解析により共有されている可能性を排除することもできる
+\begin{itemize}
+\item そもそもオブジェクトの共有自体が推奨されない
+\item 実行効率は良いし安全性も高いが，制限が強すぎて，一部の低レイヤ好きにしか好まれない
+\end{itemize}
+\item[{Python/JavaScript などの比較的新しいスクリプト言語}] 関数型の思想を言語仕様・ライブラリなどでどんどん取り入れている
+\begin{itemize}
+\item 基本的に実行効率はお構いなし
+\item ガンガン複製する
+\end{itemize}
+\item[{関数型言語}] immutable が標準
+\begin{itemize}
+\item append などを行う際は複製を行う必要がある
+\item そもそも append などのコストがかかる作業を避けるプログラムを意識的に書く傾向にある
+\item データ構造をめちゃめちゃ工夫して「償却時間は」\(O(1)\) のアルゴリズムを発明する傾向にある
+\begin{itemize}
+\item ただし，あくまで「償却時間」であり，毎回それが保証されるわけではない
+\item 「工夫」はあまり自明でない
+\item 「工夫」のために無駄な中間データ構造を要求する場合が多い
+\begin{itemize}
+\item 定数倍で性能が悪化
+\item メモリの消費（メモリ消費は GC のタイミングを早めるため速度にも影響するはず）
+\end{itemize}
+\end{itemize}
+\end{itemize}
+\item[{論理型言語}] 未具現化変数
+\begin{itemize}
+\item append は一回しかできない
+\item 一度のみ具現化可能というのは Rust の所有権解析と少し似ている
+\end{itemize}
+\item[{LMNtal}] link による強い制約
+\begin{itemize}
+\item link は2頂点を繋ぐことしかできない
+\item hyperlink を用いてデータを共有することもできるが，
+共有物を純粋に保つのが面倒で（共有物を純粋に保たないプログラミングが人類に可能だとは思えない），
+静的な検査もないため，
+めちゃめちゃバグりやすい
+\item 結局 ground を使うことになる
+\begin{itemize}
+\item C などのように再帰を回してオブジェクトを clone するコードを自前で書かなくて良いというメリットはある
+\item が，とてもコストが大きい
+\item のにめちゃめちゃ頻繁に使われている
+\end{itemize}
+\end{itemize}
+\end{description}
+
+
+
+まとめると，既存の言語では，基本的には「後で元のオブジェクトも使うかもしれないとき」は事前にそのオブジェクト全体を複製する
+\begin{itemize}
+\item 関数型言語，スクリプト系，LMNtal (with ground)，\ldots{}
+\end{itemize}
+
+
+しかし，それにはとてもコストがかかる
+\begin{itemize}
+\item オブジェクトの大きさに比例したコスト
+\end{itemize}
+
+
+しかも，後で「使うかもしれない」ということは使わない可能性もある
+\begin{itemize}
+\item つまり，既存のパラダイムでは
+\begin{enumerate}
+\item 「事前に莫大なコストを払い」，
+\item 「後で古いものを使うときのコストはゼロ」としていた
+\end{enumerate}
+\item しかし，基本的には \textbf{\textbf{新しいものを使う可能性が高い}} と考えられるので，
+\begin{enumerate}
+\item 「事前のコストは最小化」した上で，
+\item 後で「古いものを使いたくなったら（多少の）コストを払って戻す」ようにしたい
+\end{enumerate}
+\end{itemize}
+
+
+そこで，
+\begin{enumerate}
+\item 「後で元のオブジェクトも使うかもしれない」のに，破壊的更新を行うときは，「破壊的操作の履歴」をコミットすることにする
+\begin{itemize}
+\item このコミットは単にアドレスとそこに代入した値のペアさえあればよく，「オブジェクト全体の複製」などよりも遥かに低コストである
+\end{itemize}
+\item 新しいものを使い続ける場合は上記の履歴のコミット以外のコストは払わない
+\begin{itemize}
+\item 最新であるかどうかのチェックはビットが立っているかどうかなどで \(O(1)\) で行う
+\end{itemize}
+\item 古いものに戻したい場合は，「（多少の）コストを払って復元する」
+\begin{itemize}
+\item 基本的に新しいものを使い続けることの方が多いはずなので，古いものを欲しがる人にコストを払わせる
+\item ただし，このコストはあくまで破壊的更新の回数（append の回数など）であり，純粋にできる部分は純粋に保っていたらそこまで大きくはならないはず
+\end{itemize}
+\end{enumerate}
+
+
+
+
+
+
+
+
+
+
+
+
+\section{メモ}
+\label{sec:orgac7e368}
+
+差分リストはリストよりも強力なデータ構造
+\begin{itemize}
+\item append が \(O(1)\) でできる
+\item 他の操作はリストと同等
+\end{itemize}
+
+
+ただし，差分リストの append
+
+
+\section{2021/10/10}
+\label{sec:org19fafa5}
+
+提案手法は，単に共有物に対して破壊的操作を行っている場合は履歴を保持するというだけ．
+\begin{itemize}
+\item つまり，これはグラフに限らず，例えば配列などに対しても適用可能ではある．
+\item ただし，配列はめちゃめちゃ破壊的操作を行うため，履歴が大量発生する＆戻すのに操作の数だけ逆操作するため，あんまり嬉しくはない．
+\item （単方向の）差分リスト（もどき）が嬉しいのは，「末尾の破壊的更新」しかできないということであった．
+\begin{itemize}
+\item 末尾の破壊的更新以外は純粋にできるため，それらの履歴の保持が不要であり，「履歴のコストが比較的小さい」というメリットがあった．
+\item これは先週の段階ではぼんやりとしか理解していなかった（ので説明ができなかった）
+\item こう言った性質をグラフ（の shapetype のような型）において自動的に導出できるのかは不明．
+\item 双方向リストにしてしまうと，Head に cons するだけでも破壊的更新をする必要があり，この履歴も管理せざるを得なくなるため，履歴のコストが無視できなくなる（かも）
+\item 現実装は，すごく安直で，全ての操作を逆実行する（Nil（未具現化変数）の更新（具現化）をした部分もわざわざ戻す）が，こういった部分に関しても差分リストの場合は最適化が可能
+\begin{itemize}
+\item 現実装は一般のグラフへの適用を考えた（差分リストに最適化されていない）素朴な手法
+\end{itemize}
+\item 差分リストの場合は move 可能な部分は履歴を管理する必要がないというのが僕の直感的な理解（あまりきちんと説明できないのでちゃんと例題を書く必要がある）
+\begin{itemize}
+\item ただし，一般のデータ構造に対してはこれは保証できないことに気づいた（配列の破壊的代入など）
+\end{itemize}
+\end{itemize}
+\end{itemize}
+
+
+まとめると，
+\begin{itemize}
+\item 提案手法が差分リスト（もどき）において有効なのはほぼ確信している．
+\begin{itemize}
+\item これをあまり理解してもらえなかったのは純粋に説明が悪かったのだと思う．
+\end{itemize}
+\item 提案手法がより一般のグラフにおいて最適化可能なのかはよくわからない．
+\begin{itemize}
+\item 操作の数だけ復元にコストがかかる可能性がある．
+\end{itemize}
+\item が，仮に最適化できなかったとしても，「純粋（風に）にグラフ（破壊的データ構造）を扱う」という「今まで人類ができなかったこと（調べ学習が足りていない感はある）」を実現しているのでこれは価値があると思っている．
+\begin{itemize}
+\item つまり，「今までできていたことをより良くする研究」ではないということ．
+\end{itemize}
+\item 提案手法が一般にはコストゼロで途中の move と組み合わせられない（move できる部分は履歴の保持がいらないというのは一般には保証できない）のは痛手であったが，
+\end{itemize}
+所有権解析を取り入れている言語は「徹頭徹尾」move させるようにしているので，途中の move があまり最適でないというのは仕方のないことだと言える．
+\begin{itemize}
+\item ただし，差分リストの場合はこれがおそらく可能で，どういうパターンのときにそうなるのかはもっと考える必要がある（考える価値があると思う）
+\end{itemize}
+
+
+（木だけではなく）グラフ（特に差分リスト）を扱うメリット：
+\begin{itemize}
+\item グラフを扱えるとより時間効率の良い実装ができる場合がある．
+\begin{itemize}
+\item キューなど
+\item 末尾再帰化してループへ変換できる関数がある．
+\end{itemize}
+\item グラフを扱えるとより空間効率の良い実装ができる場合がある．
+\begin{itemize}
+\item 従来の append は第一引数のリストを複製するため，その分メモリを消費する．
+\item 末尾再帰化可能でない関数はスタックを消費する．
+\end{itemize}
+\item グラフを扱えるとより直感的に記述できる可能性がある．
+\begin{itemize}
+\item キュー．2本スタックを用意するのはすごく直感的というわけではない．
+\end{itemize}
+\end{itemize}
+
+
+そもそも所有権解析により，常に move させるようにするのではダメなのか？
+\begin{itemize}
+\item 常に move させるのでは困るという明確な例題は正直あまり思い付いていない．
+\item だが，例えば python ユーザに所有権解析を押し付けるのはどうかと思う．
+\begin{itemize}
+\item という非形式的な感想しかないと言われればそこまで．
+\end{itemize}
+\item alim さんの ground を用いた hypergraph による lambda も ground を用いていて，しかもラムダ式は木にちょっと毛が生えたくらいだから提案手法で（効率的に）扱えないと困る．
+\begin{itemize}
+\item この場合，ground のように丸々コピーするよりも遥かに安価である（あって欲しい）
+\item しかし，そもそも lambda のエンコードの価値が実はあまりよくわからない（失礼！）から，これが最適化されることの意味もよくわからない．
+\end{itemize}
+\end{itemize}
+
+
+lmntal に関して何かやれば，それでもうほぼ新規性が保証される．とは個人的にはあまり思っていない．
+\begin{itemize}
+\item 学士・修士レベルではそうだと思うが．
+\item 例えば，lmntal-shapetype は structured-gamma との差分をめちゃめちゃ聞かれる．
+\item indexed-type は st-gamma にはないので（多分）これは新規性がある．
+\item が，これは lmntal とは全然関係ない話だと思う．
+\item 「他の言語で実現されていることを lmntal に導入する」というのは（lmntal 独自の特徴を活かせない限り）あまり旨味がなくて，「lmntal が実現していることを（そのままではうまくいかないので工夫して）他の言語に導入する」方が価値があると思っている．
+\begin{itemize}
+\item なぜ lmntal ではダメなの？に対する反論はしなくてはいけない（けどこれは研究室の意向と反発するように捉えられかねないのでかなり神経を削る．．．）
+\end{itemize}
+\end{itemize}
+\end{document}

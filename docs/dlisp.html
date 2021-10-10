@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2021-10-10 Sun 22:29 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DLisp</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="Jin SANO" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<script type="text/javascript">
+// @license magnet:?xt=urn:btih:e95b018ef3580986a04669f1b5879592219e2a7a&dn=public-domain.txt Public Domain
+<!--/*--><![CDATA[/*><!--*/
+     function CodeHighlightOn(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.add("code-highlighted");
+         target.classList.add("code-highlighted");
+       }
+     }
+     function CodeHighlightOff(elem, id)
+     {
+       var target = document.getElementById(id);
+       if(null != target) {
+         elem.classList.remove("code-highlighted");
+         target.classList.remove("code-highlighted");
+       }
+     }
+    /*]]>*///-->
+// @license-end
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">DLisp
+<br />
+<span class="subtitle">Differential List Processor</span>
+</h1>
+<div id="table-of-contents">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgbee4ae2">1. 概要</a></li>
+<li><a href="#orgcdaad9f">2. メモ</a></li>
+<li><a href="#org53ad53a">3. 2021/10/10</a></li>
+</ul>
+</div>
+</div>
+
+<div id="outline-container-orgbee4ae2" class="outline-2">
+<h2 id="orgbee4ae2"><span class="section-number-2">1</span> 概要</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+従来のプログラミング言語におけるデータの持ち方の考え方
+</p>
+<dl class="org-dl">
+<dt>C/C++ などの古典的な手続き型言語</dt><dd>破壊的更新が標準
+<ul class="org-ul">
+<li><code>const</code> が明示的に記述されていないと破壊的更新の可能性を否定できない</li>
+<li>共有されているオブジェクトでもお構いなしに破壊的更新を行う</li>
+<li>どうしても「元のオブジェクト」が欲しくなる場合は，ユーザが明示的にその実装を行う必要がある
+<ul class="org-ul">
+<li>再帰的にコピーを行う関数を実装するものと思われる</li>
+</ul></li>
+</ul></dd>
+<dt>Rust などの比較的新しい手続き型言語</dt><dd>破壊的更新を行うが，所有権解析により共有されている可能性を排除することもできる
+<ul class="org-ul">
+<li>そもそもオブジェクトの共有自体が推奨されない</li>
+<li>実行効率は良いし安全性も高いが，制限が強すぎて，一部の低レイヤ好きにしか好まれない</li>
+</ul></dd>
+<dt>Python/JavaScript などの比較的新しいスクリプト言語</dt><dd>関数型の思想を言語仕様・ライブラリなどでどんどん取り入れている
+<ul class="org-ul">
+<li>基本的に実行効率はお構いなし</li>
+<li>ガンガン複製する</li>
+</ul></dd>
+<dt>関数型言語</dt><dd>immutable が標準
+<ul class="org-ul">
+<li>append などを行う際は複製を行う必要がある</li>
+<li>そもそも append などのコストがかかる作業を避けるプログラムを意識的に書く傾向にある</li>
+<li>データ構造をめちゃめちゃ工夫して「償却時間は」\(O(1)\) のアルゴリズムを発明する傾向にある
+<ul class="org-ul">
+<li>ただし，あくまで「償却時間」であり，毎回それが保証されるわけではない</li>
+<li>「工夫」はあまり自明でない</li>
+<li>「工夫」のために無駄な中間データ構造を要求する場合が多い
+<ul class="org-ul">
+<li>定数倍で性能が悪化</li>
+<li>メモリの消費（メモリ消費は GC のタイミングを早めるため速度にも影響するはず）</li>
+</ul></li>
+</ul></li>
+</ul></dd>
+<dt>論理型言語</dt><dd>未具現化変数
+<ul class="org-ul">
+<li>append は一回しかできない</li>
+<li>一度のみ具現化可能というのは Rust の所有権解析と少し似ている</li>
+</ul></dd>
+<dt>LMNtal</dt><dd>link による強い制約
+<ul class="org-ul">
+<li>link は2頂点を繋ぐことしかできない</li>
+<li>hyperlink を用いてデータを共有することもできるが，
+共有物を純粋に保つのが面倒で（共有物を純粋に保たないプログラミングが人類に可能だとは思えない），
+静的な検査もないため，
+めちゃめちゃバグりやすい</li>
+<li>結局 ground を使うことになる
+<ul class="org-ul">
+<li>C などのように再帰を回してオブジェクトを clone するコードを自前で書かなくて良いというメリットはある</li>
+<li>が，とてもコストが大きい</li>
+<li>のにめちゃめちゃ頻繁に使われている</li>
+</ul></li>
+</ul></dd>
+</dl>
+
+
+
+<p>
+既存の言語では，基本的には「後で元のオブジェクトも使うかもしれないとき」は事前にそのオブジェクト全体を複製する
+</p>
+<ul class="org-ul">
+<li>関数型言語，スクリプト系，LMNtal (with ground)，&#x2026;</li>
+</ul>
+
+
+<p>
+しかし，それにはとてもコストがかかる
+</p>
+<ul class="org-ul">
+<li>オブジェクトの大きさに比例したコスト</li>
+</ul>
+
+
+<p>
+しかも，後で「使うかもしれない」ということは使わない可能性もある
+</p>
+<ul class="org-ul">
+<li>つまり，既存のパラダイムでは
+<ol class="org-ol">
+<li>「事前に莫大なコストを払い」，</li>
+<li>「後で古いものを使うときのコストはゼロ」としていた</li>
+</ol></li>
+<li>しかし，基本的には <b><b>新しいものを使う可能性が高い</b></b> と考えられるので，
+<ol class="org-ol">
+<li>「事前のコストは最小化」した上で，</li>
+<li>後で「古いものを使いたくなったら（多少の）コストを払って戻す」ようにしたい</li>
+</ol></li>
+</ul>
+
+
+<p>
+そこで，
+</p>
+<ol class="org-ol">
+<li>「後で元のオブジェクトも使うかもしれない」のに，破壊的更新を行うときは，「破壊的操作の履歴」をコミットすることにする
+<ul class="org-ul">
+<li>このコミットは単にアドレスとそこに代入した値のペアさえあればよく，「オブジェクト全体の複製」などよりも遥かに低コストである</li>
+</ul></li>
+<li>新しいものを使い続ける場合は上記の履歴のコミット以外のコストは払わない
+<ul class="org-ul">
+<li>最新であるかどうかのチェックはビットが立っているかどうかなどで \(O(1)\) で行う</li>
+</ul></li>
+<li>古いものに戻したい場合は，「（多少の）コストを払って復元する」
+<ul class="org-ul">
+<li>基本的に新しいものを使い続けることの方が多いはずなので，古いものを欲しがる人にコストを払わせる</li>
+<li>ただし，このコストはあくまで破壊的更新の回数（append の回数など）であり，純粋にできる部分は純粋に保っていたらそこまで大きくはならないはず</li>
+</ul></li>
+</ol>
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="outline-container-orgcdaad9f" class="outline-2">
+<h2 id="orgcdaad9f"><span class="section-number-2">2</span> メモ</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+差分リストはリストよりも強力なデータ構造
+</p>
+<ul class="org-ul">
+<li>append が \(O(1)\) でできる</li>
+<li>他の操作はリストと同等</li>
+</ul>
+
+
+<p>
+ただし，差分リストの append
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org53ad53a" class="outline-2">
+<h2 id="org53ad53a"><span class="section-number-2">3</span> 2021/10/10</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+提案手法は，単に共有物に対して破壊的操作を行っている場合は履歴を保持するというだけ．
+</p>
+<ul class="org-ul">
+<li>つまり，これはグラフに限らず，例えば配列などに対しても適用可能ではある．</li>
+<li>ただし，配列はめちゃめちゃ破壊的操作を行うため，履歴が大量発生する＆戻すのに操作の数だけ逆操作するため，あんまり嬉しくはない．</li>
+<li>（単方向の）差分リスト（もどき）が嬉しいのは，「末尾の破壊的更新」しかできないということであった．
+<ul class="org-ul">
+<li>末尾の破壊的更新以外は純粋にできるため，それらの履歴の保持が不要であり，「履歴のコストが比較的小さい」というメリットがあった．</li>
+<li>これは先週の段階ではぼんやりとしか理解していなかった（ので説明ができなかった）</li>
+<li>こう言った性質をグラフ（の shapetype のような型）において自動的に導出できるのかは不明．</li>
+<li>双方向リストにしてしまうと，Head に cons するだけでも破壊的更新をする必要があり，この履歴も管理せざるを得なくなるため，履歴のコストが無視できなくなる（かも）</li>
+<li>現実装は，すごく安直で，全ての操作を逆実行する（Nil（未具現化変数）の更新（具現化）をした部分もわざわざ戻す）が，こういった部分に関しても差分リストの場合は最適化が可能
+<ul class="org-ul">
+<li>現実装は一般のグラフへの適用を考えた（差分リストに最適化されていない）素朴な手法</li>
+</ul></li>
+<li>差分リストの場合は move 可能な部分は履歴を管理する必要がないというのが僕の直感的な理解（あまりきちんと説明できないのでちゃんと例題を書く必要がある）
+<ul class="org-ul">
+<li>ただし，一般のデータ構造に対してはこれは保証できないことに気づいた（配列の破壊的代入など）</li>
+</ul></li>
+</ul></li>
+</ul>
+
+
+<p>
+まとめると，
+</p>
+<ul class="org-ul">
+<li>提案手法が差分リスト（もどき）において有効なのはほぼ確信している．
+<ul class="org-ul">
+<li>これをあまり理解してもらえなかったのは純粋に説明が悪かったのだと思う．</li>
+</ul></li>
+<li>提案手法がより一般のグラフにおいて最適化可能なのかはよくわからない．
+<ul class="org-ul">
+<li>操作の数だけ復元にコストがかかる可能性がある．</li>
+</ul></li>
+<li>が，仮に最適化できなかったとしても，「純粋（風に）にグラフ（破壊的データ構造）を扱う」という「今まで人類ができなかったこと（調べ学習が足りていない感はある）」を実現しているのでこれは価値があると思っている．
+<ul class="org-ul">
+<li>つまり，「今までできていたことをより良くする研究」ではないということ．</li>
+</ul></li>
+<li>提案手法が一般にはコストゼロで途中の move と組み合わせられない（move できる部分は履歴の保持がいらないというのは一般には保証できない）のは痛手であったが，</li>
+</ul>
+<p>
+所有権解析を取り入れている言語は「徹頭徹尾」move させるようにしているので，途中の move があまり最適でないというのは仕方のないことだと言える．
+</p>
+<ul class="org-ul">
+<li>ただし，差分リストの場合はこれがおそらく可能で，どういうパターンのときにそうなるのかはもっと考える必要がある（考える価値があると思う）</li>
+</ul>
+
+
+<p>
+（木だけではなく）グラフ（特に差分リスト）を扱うメリット：
+</p>
+<ul class="org-ul">
+<li>グラフを扱えるとより時間効率の良い実装ができる場合がある．
+<ul class="org-ul">
+<li>キューなど</li>
+<li>末尾再帰化してループへ変換できる関数がある．</li>
+</ul></li>
+<li>グラフを扱えるとより空間効率の良い実装ができる場合がある．
+<ul class="org-ul">
+<li>従来の append は第一引数のリストを複製するため，その分メモリを消費する．</li>
+<li>末尾再帰化可能でない関数はスタックを消費する．</li>
+</ul></li>
+<li>グラフを扱えるとより直感的に記述できる可能性がある．
+<ul class="org-ul">
+<li>キュー．2本スタックを用意するのはすごく直感的というわけではない．</li>
+</ul></li>
+</ul>
+
+
+<p>
+そもそも所有権解析により，常に move させるようにするのではダメなのか？
+</p>
+<ul class="org-ul">
+<li>常に move させるのでは困るという明確な例題は正直あまり思い付いていない．</li>
+<li>だが，例えば python ユーザに所有権解析を押し付けるのはどうかと思う．
+<ul class="org-ul">
+<li>という非形式的な感想しかないと言われればそこまで．</li>
+</ul></li>
+<li>alim さんの ground を用いた hypergraph による lambda も ground を用いていて，しかもラムダ式は木にちょっと毛が生えたくらいだから提案手法で（効率的に）扱えないと困る．
+<ul class="org-ul">
+<li>この場合，ground のように丸々コピーするよりも遥かに安価である（あって欲しい）</li>
+<li>しかし，そもそも lambda のエンコードの価値が実はあまりよくわからない（失礼！）から，これが最適化されることの意味もよくわからない．</li>
+</ul></li>
+</ul>
+
+
+<p>
+lmntal に関して何かやれば，それでもうほぼ新規性が保証される．とは個人的にはあまり思っていない．
+</p>
+<ul class="org-ul">
+<li>学士・修士レベルではそうだと思うが．</li>
+<li>例えば，lmntal-shapetype は structured-gamma との差分をめちゃめちゃ聞かれる．</li>
+<li>indexed-type は st-gamma にはないので（多分）これは新規性がある．</li>
+<li>が，これは lmntal とは全然関係ない話だと思う．</li>
+<li>「他の言語で実現されていることを lmntal に導入する」というのは（lmntal 独自の特徴を活かせない限り）あまり旨味がなくて，「lmntal が実現していることを（そのままではうまくいかないので工夫して）他の言語に導入する」方が価値があると思っている．
+<ul class="org-ul">
+<li>なぜ lmntal ではダメなの？に対する反論はしなくてはいけない（けどこれは研究室の意向と反発するように捉えられかねないのでかなり神経を削る．．．）</li>
+</ul></li>
+</ul>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">Author: Jin SANO</p>
+<p class="date">Created: 2021-10-10 Sun 22:29</p>
+<p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
+</div>
+</body>
+</html>

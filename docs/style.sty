@@ -1,0 +1,80 @@
+% A file for general settings
+
+% packages for font
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\usepackage{unicode-math}
+\setmathfont{latinmodern-math.otf}
+\setmathfont[range=\setminus]{Asana-Math.otf}
+
+
+\setsansfont[
+  Path=/Users/sano/work/express-beamer/font/HaranoAji/,
+  UprightFont=HaranoAjiGothic-Light,
+  ItalicFont=HaranoAjiGothic-Light,
+  BoldFont=HaranoAjiGothic-Medium,
+  BoldItalicFont=HaranoAjiGothic-Light,
+  Extension = .otf
+]{HaranoAjiGothic-Light}
+\setmainfont[
+  Path=/Users/sano/work/express-beamer/font/HaranoAji/,
+  UprightFont=HaranoAjiGothic-Light,
+  ItalicFont=HaranoAjiGothic-Light,
+  BoldFont=HaranoAjiGothic-Medium,
+  BoldItalicFont=HaranoAjiGothic-Light,
+  Extension = .otf
+]{HaranoAjiGothic-Light}
+\setCJKmainfont[
+  Path=/Users/sano/work/express-beamer/font/HaranoAji/,
+  UprightFont=HaranoAjiGothic-Light,
+  ItalicFont=HaranoAjiGothic-Light,
+  BoldFont=HaranoAjiGothic-Medium,
+  BoldItalicFont=HaranoAjiGothic-Light,
+  Extension = .otf
+]{HaranoAjiGothic-Light}
+
+
+
+% These packages are needed for the custom theme "crystalline".
+\usepackage{xcolor}
+\usepackage{tikz}
+
+\usetikzlibrary{positioning}
+\usepackage{calc}
+
+% We should not load the "graphicx" and the "color" package if we are using the loading
+% above "sty/japanese.sty" since it is loading "jlisting", which loads "graphicx"
+% and "color".
+% However, you need to load this (if you want to insert images) when you omit the
+% above "sty/japanese.sty".
+%
+% \usepackage[dvipdfmx]{graphicx}
+
+\usepackage{forest}
+
+\usepackage[
+  sorting     = none,
+  backend     = biber,
+  maxbibnames = 2,
+  doi         = false,
+  isbn        = false,
+  url         = false,
+  eprint      = false,
+]{biblatex}
+
+
+% The references should be written in the "ref.bib".
+\addbibresource{ref.bib} 
+
+
+
+\usepackage[margin=0.5in]{geometry}
+
+% \usepackage{geometry}
+% \geometry{
+%   a4paper,
+% %  total = {170mm,257mm},
+%   left  = 10mm,
+%   top   = 10mm,
+% }
+% 
