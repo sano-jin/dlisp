@@ -1,4 +1,4 @@
-% Created 2021-10-11 Mon 11:09
+% Created 2021-10-11 Mon 11:39
 % Intended LaTeX compiler: pdflatex
 \documentclass[10pt, a4j, twocolumn]{scrartcl}
                \usepackage{amsmath}
@@ -49,7 +49,7 @@
 
 
 \section{概要}
-\label{sec:org20d3a77}
+\label{sec:orgc60b104}
 
 共有されたオブジェクトの破壊的操作を試みる際に，
 事前にオブジェクト全体を複製するのではなく，
@@ -63,7 +63,7 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 \section{背景}
-\label{sec:org92785b0}
+\label{sec:org012b795}
 
 従来のプログラミング言語におけるデータの持ち方の考え方
 \begin{description}
@@ -156,9 +156,11 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 そこで，
 \begin{enumerate}
-\item 「後で元のオブジェクトも使うかもしれない」のに，破壊的更新を行うときは，「破壊的操作の履歴」をコミットすることにする
+\item 「後で元のオブジェクトも使うかもしれない」のに，
+破壊的更新を行うときは，「破壊的操作の履歴」をコミットすることにする
 \begin{itemize}
-\item このコミットは単にアドレスとそこに代入した値のペアさえあればよく，「オブジェクト全体の複製」などよりも遥かに低コストである
+\item このコミットは単にアドレスとそこに代入した値のペアさえあればよく，
+「オブジェクト全体の複製」などよりも遥かに低コストである
 \end{itemize}
 \item 新しいものを使い続ける場合は上記の履歴のコミット以外のコストは払わない
 \begin{itemize}
@@ -166,17 +168,19 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 \end{itemize}
 \item 古いものに戻したい場合は，「（多少の）コストを払って復元する」
 \begin{itemize}
-\item 基本的に新しいものを使い続けることの方が多いはずなので，古いものを欲しがる人にコストを払わせる
-\item ただし，このコストはあくまで破壊的更新の回数（append の回数など）であり，純粋にできる部分は純粋に保っていたらそこまで大きくはならないはず
+\item 基本的に新しいものを使い続けることの方が多いはずなので，
+\textbf{\textbf{古いものを欲しがる人にコストを払わせる}}
+\item ただし，このコストはあくまで破壊的更新の回数（append の回数など）であり，
+純粋にできる部分は純粋に保っていたらそこまで大きくはならないはず
 \end{itemize}
 \end{enumerate}
 
 
 \section{提案手法}
-\label{sec:org75d3efd}
+\label{sec:orgb6c37be}
 
 \subsection{概要}
-\label{sec:org4a14c0f}
+\label{sec:orgf05d686}
 
 破壊的更新の履歴を木構造で管理する．
 
@@ -232,9 +236,9 @@ Master stream のノードにする
 
 
 \subsection{実装}
-\label{sec:org1731870}
+\label{sec:org6c6cc15}
 
-\lstset{language=Caml,label=orgc2d12c5,caption={History node},captionpos=b,numbers=none}
+\lstset{language=Caml,label=org6b2794e,caption={History node},captionpos=b,numbers=none}
 \begin{lstlisting}
 type history_node =
   | Main of
@@ -249,7 +253,7 @@ type history_node =
 \end{lstlisting}
 
 
-\lstset{language=Caml,label=org18b956c,caption={Update},captionpos=b,numbers=none}
+\lstset{language=Caml,label=orgf002150,caption={Update},captionpos=b,numbers=none}
 \begin{lstlisting}
 (** Main stream を辿りながら帰りがけに逆実行する．
 辿ってきた node は sub stream 化して逆順につなぐ．
@@ -294,14 +298,13 @@ let update = traverse_history None
 
 これだけ．
 
+しかも，Main stream と Sub stream の区別がいらないなら，コード行は更にこの半分以下になる．
 
 
 \section{例題}
-\label{sec:org8dcd37d}
+\label{sec:org80981e9}
 
-
-
-\lstset{language=Lisp,label=org4eff553,caption={Append},captionpos=b,numbers=none}
+\lstset{language=Lisp,label=org416c9e1,caption={Append},captionpos=b,numbers=none}
 \begin{lstlisting}
 ;; ++ は append
 
@@ -328,7 +331,6 @@ let update = traverse_history None
 
 これの実行結果が
 
-
 \begin{verbatim}
 (1 2 3)
 (1 2 3 4 5 6)
@@ -348,11 +350,11 @@ let update = traverse_history None
 
 
 \section{課題}
-\label{sec:org15bcd34}
+\label{sec:orgb99f873}
 
 occur checking はまだ実装していないので
 
-\lstset{language=Lisp,label=org0314d1d,caption={Circle},captionpos=b,numbers=none}
+\lstset{language=Lisp,label=org1d13a92,caption={Circle},captionpos=b,numbers=none}
 \begin{lstlisting}
 (let ((x '(1 2 3)))
   (let ((y (++ x x)))
@@ -366,14 +368,32 @@ occur checking はまだ実装していないので
 
 このように自分自身を含む差分リストを連結できてしまい，
 その場合はグラフが循環するため，
-評価しようとすると無限ループし， \texttt{Stack\_overflow} する
+評価しようとすると無限ループし， \texttt{Stack\_overflow} する．
+
+Occur checking の（素朴な）実装は Union-find を用いれば良い．
+差分リストの id（オブジェクトのアドレスを用いれば良い）で素集合データ構造を作ってやれば，
+アッカーマン関数の逆関数のオーダで自分自身を含む差分リストを連結しようとしてないかが判別できる．
+
+自分自身を含む差分リストを連結しようとしている場合は，残念ながら従来の append を行う他ないと思われる．
+\begin{itemize}
+\item が，そもそも自分自身を連結するコードをユーザがそんな頻繁に書くとは思えない．
+同じものをたくさん並べることは基本的には無意味なので．
+\end{itemize}
 
 
 その他最適化手法
+\begin{itemize}
+\item 現実装は，すごく安直で，
+全ての操作を逆実行する（Nil（未具現化変数）の更新（具現化）をした部分もわざわざ戻す）が，
+差分リストの場合は最適化が可能
+\begin{itemize}
+\item 現実装は一般のグラフへの適用を考えた（差分リストに最適化されていない）素朴な手法
+\end{itemize}
+\end{itemize}
 
 
 \section{まとめ}
-\label{sec:org0f808aa}
+\label{sec:org0a85c82}
 
 共有されたオブジェクトの破壊的操作を試みる際に，
 事前にオブジェクト全体を複製するのではなく，
@@ -389,7 +409,7 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 \section{メモ}
-\label{sec:orgb969a51}
+\label{sec:orgbfa9f83}
 
 差分リストはリストよりも強力なデータ構造
 \begin{itemize}
@@ -402,7 +422,7 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 \section{2021/10/10}
-\label{sec:org106c6ed}
+\label{sec:orgb9d4f63}
 
 提案手法は，単に共有物に対して破壊的操作を行っている場合は履歴を保持するというだけ．
 \begin{itemize}
