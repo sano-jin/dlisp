@@ -1,4 +1,4 @@
-% Created 2021-10-11 Mon 11:39
+% Created 2021-10-11 Mon 12:05
 % Intended LaTeX compiler: pdflatex
 \documentclass[10pt, a4j, twocolumn]{scrartcl}
                \usepackage{amsmath}
@@ -32,7 +32,7 @@
 \author{Jin SANO}
 \date{\today}
 \title{DLisp\\\medskip
-\large Differential List Processor}
+\large Differential List Processor \\ \url{https://github.com/sano-jin/dlisp}}
 \hypersetup{
  pdfauthor={Jin SANO},
  pdftitle={DLisp},
@@ -45,11 +45,32 @@
 \maketitle
 \tableofcontents
 
+\vspace{1em}
 
+\textbf{\textbf{TODO}} 
+
+\begin{itemize}
+\item 提案書
+\begin{itemize}
+\item 関連研究を載せる
+\item 参考文献を書く（org-mode での書き方がよくわからない）
+\item 提案手法を説明する図を追加する
+\item モチベをもっとクリアにする
+\end{itemize}
+
+\item 実装
+\begin{itemize}
+\item car, cdr, cons などの builtin 関数
+\item Occur checking
+\item 実装の容易さのために一度 OCaml のリストに変換してから評価しているので，
+差分リストのまま扱うようにする
+\item 履歴の最適化（の検討）
+\end{itemize}
+\end{itemize}
 
 
 \section{概要}
-\label{sec:orgc60b104}
+\label{sec:org5d3b037}
 
 共有されたオブジェクトの破壊的操作を試みる際に，
 事前にオブジェクト全体を複製するのではなく，
@@ -62,8 +83,11 @@
 DLisp は append が \(O(1)\) で可能である（より正確にはアッカーマン関数の逆関数）．
 
 
-\section{背景}
-\label{sec:org012b795}
+\section{導入}
+\label{sec:orga26e51b}
+
+\subsection{背景}
+\label{sec:org853655d}
 
 従来のプログラミング言語におけるデータの持ち方の考え方
 \begin{description}
@@ -176,11 +200,29 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 \end{enumerate}
 
 
+\subsection{先行研究}
+\label{sec:org368131c}
+
+要調査
+
+可逆プログラミング
+\begin{description}
+\item[{Janus}] 低レベルでグラフのようなデータ構造を扱うことまで頭が回っていないように見える（要調査）
+\end{description}
+
+
+
+\subsection{本稿の構成}
+\label{sec:org19705ee}
+
+todo
+
+
 \section{提案手法}
-\label{sec:orgb6c37be}
+\label{sec:org1539bc4}
 
 \subsection{概要}
-\label{sec:orgf05d686}
+\label{sec:org8a1c891}
 
 破壊的更新の履歴を木構造で管理する．
 
@@ -236,9 +278,9 @@ Master stream のノードにする
 
 
 \subsection{実装}
-\label{sec:org6c6cc15}
+\label{sec:orgdab44c6}
 
-\lstset{language=Caml,label=org6b2794e,caption={History node},captionpos=b,numbers=none}
+\lstset{language=Caml,label=orgb9d8f77,caption={History node},captionpos=b,numbers=none}
 \begin{lstlisting}
 type history_node =
   | Main of
@@ -253,7 +295,7 @@ type history_node =
 \end{lstlisting}
 
 
-\lstset{language=Caml,label=orgf002150,caption={Update},captionpos=b,numbers=none}
+\lstset{language=Caml,label=orge58861a,caption={Update},captionpos=b,numbers=none}
 \begin{lstlisting}
 (** Main stream を辿りながら帰りがけに逆実行する．
 辿ってきた node は sub stream 化して逆順につなぐ．
@@ -282,7 +324,7 @@ let rec traverse_history next_ref_opt this_ref =
       let old_value = !addr in
       addr := value;
       this_ref := Main ((addr, old_value), next_ref_opt)
-  | Main (id, addr_value, old_next_ref_opt) ->
+  | Main (addr_value, old_next_ref_opt) ->
       (match old_next_ref_opt with
       | None -> ()
       | Some old_next_ref -> traverse_main_stream this_ref old_next_ref);
@@ -302,9 +344,9 @@ let update = traverse_history None
 
 
 \section{例題}
-\label{sec:org80981e9}
+\label{sec:org4d7a420}
 
-\lstset{language=Lisp,label=org416c9e1,caption={Append},captionpos=b,numbers=none}
+\lstset{language=Lisp,label=orgf2a1719,caption={Append},captionpos=b,numbers=none}
 \begin{lstlisting}
 ;; ++ は append
 
@@ -350,11 +392,11 @@ let update = traverse_history None
 
 
 \section{課題}
-\label{sec:orgb99f873}
+\label{sec:org06367eb}
 
 occur checking はまだ実装していないので
 
-\lstset{language=Lisp,label=org1d13a92,caption={Circle},captionpos=b,numbers=none}
+\lstset{language=Lisp,label=orgc280fe8,caption={Circle},captionpos=b,numbers=none}
 \begin{lstlisting}
 (let ((x '(1 2 3)))
   (let ((y (++ x x)))
@@ -393,7 +435,7 @@ Occur checking の（素朴な）実装は Union-find を用いれば良い．
 
 
 \section{まとめ}
-\label{sec:org0a85c82}
+\label{sec:org343a82a}
 
 共有されたオブジェクトの破壊的操作を試みる際に，
 事前にオブジェクト全体を複製するのではなく，
@@ -409,7 +451,7 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 \section{メモ}
-\label{sec:orgbfa9f83}
+\label{sec:org56291b1}
 
 差分リストはリストよりも強力なデータ構造
 \begin{itemize}
@@ -422,7 +464,7 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 \section{2021/10/10}
-\label{sec:orgb9d4f63}
+\label{sec:org6be18db}
 
 提案手法は，単に共有物に対して破壊的操作を行っている場合は履歴を保持するというだけ．
 \begin{itemize}

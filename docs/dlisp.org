@@ -1,9 +1,26 @@
 #+TITLE: DLisp
-#+SUBTITLE: Differential List Processor
+#+SUBTITLE: Differential List Processor @@latex:\\@@ <https://github.com/sano-jin/dlisp>
 #+LaTeX_CLASS: koma-jarticle
 #+LATEX_CMD: xelatex
 #+latex_header: \usepackage{style}
 
+
+\vspace{1em}
+
+**TODO** 
+
+- 提案書
+  - 関連研究を載せる
+  - 参考文献を書く（org-mode での書き方がよくわからない）
+  - 提案手法を説明する図を追加する
+  - モチベをもっとクリアにする
+
+- 実装
+  - car, cdr, cons などの builtin 関数
+  - Occur checking
+  - 実装の容易さのために一度 OCaml のリストに変換してから評価しているので，
+    差分リストのまま扱うようにする
+  - 履歴の最適化（の検討）
 
 
 * 概要
@@ -19,8 +36,10 @@
   DLisp は append が \(O(1)\) で可能である（より正確にはアッカーマン関数の逆関数）．
 
   
-* 背景
+* 導入
   
+** 背景
+   
   従来のプログラミング言語におけるデータの持ち方の考え方
   - C/C++ などの古典的な手続き型言語 :: 破壊的更新が標準
     - =const= が明示的に記述されていないと破壊的更新の可能性を否定できない
@@ -92,6 +111,20 @@
        **古いものを欲しがる人にコストを払わせる**
      - ただし，このコストはあくまで破壊的更新の回数（append の回数など）であり，
        純粋にできる部分は純粋に保っていたらそこまで大きくはならないはず
+
+
+** 先行研究
+
+   要調査
+   
+   可逆プログラミング
+   - Janus :: 低レベルでグラフのようなデータ構造を扱うことまで頭が回っていないように見える（要調査）
+
+
+
+** 本稿の構成
+
+   todo
      
   
 * 提案手法
@@ -189,7 +222,7 @@
           let old_value = !addr in
           addr := value;
           this_ref := Main ((addr, old_value), next_ref_opt)
-      | Main (id, addr_value, old_next_ref_opt) ->
+      | Main (addr_value, old_next_ref_opt) ->
           (match old_next_ref_opt with
           | None -> ()
           | Some old_next_ref -> traverse_main_stream this_ref old_next_ref);
