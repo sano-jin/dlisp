@@ -92,19 +92,23 @@
   
 * 提案手法
 
+** 概要
+  
   破壊的更新の履歴を木構造で管理する．
 
   欲しいオブジェクトに対応する葉と
   現時点で最新のオブジェクトに対応する葉の間のパスの
   ノードにある操作（逆操作）を実行しながらこれらのノードを逆向きにつなぎ直す．
 
-  素朴な手法なので要改良．
-
   最古のノードから最新のオブジェクトに対応するノードまでのパスを
   Main stream と呼ぶことにする．
   Main stream から派生したパス（Main stream から取り残されてしまったブランチ）を
   Sub stream と呼ぶことにする．
   - Master stream と Sub stream は区別できる必要がある（タグをつけておく）
+  - と思っていたが，その必要はないかも知れない．
+    統一した方がより綺麗に実装できる．
+    ただ，区別していた方が理解が容易である気もするのでとりあえずこのままにしておく．
+    
   
 
   オブジェクトが最新かどうかはそれが参照する履歴ノードが Master stream 上にあり，
@@ -129,6 +133,163 @@
     
   というだけ（これ以上ないくらい非常にシンプル）
   
+  ただし，素朴な手法なので要改良である．
+  - 特に差分リストの場合はもっと最適化できる
+
+
+** 実装 
+
+  #+NAME: history node
+  #+CAPTION: History node
+  #+BEGIN_SRC ocaml
+    type history_node =
+      | Main of
+          (node ref * node) *
+          history_node ref option
+      | Sub of
+          (node ref * node) *
+          history_node ref
+    (* node は 差分リストのノード．
+     ,* 現在履歴を管理するデータは差分リストのノードだけ
+     ,*)
+  #+END_SRC
+
+
+  #+NAME: update
+  #+CAPTION: Update
+  #+BEGIN_SRC ocaml
+    (** Main stream を辿りながら帰りがけに逆実行する．
+    辿ってきた node は sub stream 化して逆順につなぐ．
+    ,*)
+    let rec traverse_main_stream parent_ref this_ref =
+      match !this_ref with
+      | Sub _ -> 
+          failwith @@ "substream should not be reached from main stream"
+      | Main ((addr, value), next_ref_opt) ->
+          (match next_ref_opt with
+          | None -> ()
+          | Some next_ref -> traverse_main_stream this_ref next_ref);
+          let old_value = !addr in
+          addr := value;
+          this_ref := Sub ((addr, old_value), parent_ref)
+
+    (** 履歴を辿る．
+    + Sub stream を上へ辿って行き，
+    + Main stream (LCA) に辿り着いたら（ただし，LCA の操作は実行しない），[traverse_main_stream] を実行し，
+    + その後帰りがけ順に sub stream を順実行しながらこれを main stream 化する．
+    ,*)
+    let rec traverse_history next_ref_opt this_ref =
+      match !this_ref with
+      | Sub ((addr, value), parent_ref) ->
+          traverse_history (Some this_ref) parent_ref;
+          let old_value = !addr in
+          addr := value;
+          this_ref := Main ((addr, old_value), next_ref_opt)
+      | Main (id, addr_value, old_next_ref_opt) ->
+          (match old_next_ref_opt with
+          | None -> ()
+          | Some old_next_ref -> traverse_main_stream this_ref old_next_ref);
+          this_ref := Main (addr_value, next_ref_opt)
+
+    (** 差分リストを評価する前にはこの関数を実行して，
+    履歴を辿って差分リストを最新の状態にし，履歴を更新する必要がある．
+    この関数のみ外部に公開しておけば良い．
+    ,*)
+    let update = traverse_history None
+  #+END_SRC
+
+
+  これだけ．
+
+  
+
+* 例題
+
+
+  
+  #+NAME: append
+  #+CAPTION: Append
+  #+BEGIN_SRC lisp
+    ;; ++ は append
+
+    (let ((x '(1 2 3)))
+      (let ((y (++ x '(4 5 6))))
+        (let ((z (++ x '(7 8 9))))
+          (let ((w (++ y '(10 11 12))))
+            (begin
+             (print x)
+             (print y)
+             (print z)
+             (print w)
+             (print x)
+             (print y)
+             (print z)
+             (print w)
+             )
+            )
+          )
+        )
+      )
+  #+END_SRC
+
+
+  これの実行結果が
+
+  
+  #+BEGIN_EXAMPLE
+  (1 2 3)
+  (1 2 3 4 5 6)
+  (1 2 3 7 8 9)
+  (1 2 3 4 5 6 10 11 12)
+  (1 2 3)
+  (1 2 3 4 5 6)
+  (1 2 3 7 8 9)
+  (1 2 3 4 5 6 10 11 12)
+  (1 2 3 4 5 6 10 11 12)
+  #+END_EXAMPLE
+
+  こうなる
+  - print は引数を評価してそれを標準出力に表示して，引数の値を返す built-in 関数
+
+    
+* 課題
+
+  occur checking はまだ実装していないので
+
+  #+NAME: Circle
+  #+CAPTION: Circle
+  #+BEGIN_SRC lisp
+    (let ((x '(1 2 3)))
+      (let ((y (++ x x)))
+        (begin
+         (print x)
+         (print y)
+         )
+        )
+      )
+  #+END_SRC
+
+  このように自分自身を含む差分リストを連結できてしまい，
+  その場合はグラフが循環するため，
+  評価しようとすると無限ループし， =Stack_overflow= する
+
+
+  その他最適化手法
+
+  
+* まとめ
+
+  共有されたオブジェクトの破壊的操作を試みる際に，
+  事前にオブジェクト全体を複製するのではなく，
+  操作の履歴を発行することで，
+  過去の状態を復元できる手段を残しながら，
+  最新のオブジェクトを手にいれるコストを最小化する手法を提案する．
+
+  この手法が顕著に活かせる例として，
+  アトムと差分リストのみからなる Lisp 派生言語 DLisp を実装した．
+  DLisp は append が \(O(1)\) で可能である（より正確にはアッカーマン関数の逆関数）．
+
+
   
 
 * メモ
