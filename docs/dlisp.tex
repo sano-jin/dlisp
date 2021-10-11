@@ -1,4 +1,4 @@
-% Created 2021-10-11 Mon 00:13
+% Created 2021-10-11 Mon 10:15
 % Intended LaTeX compiler: pdflatex
 \documentclass[10pt, a4j, twocolumn]{scrartcl}
                \usepackage{amsmath}
@@ -48,7 +48,7 @@
 
 
 \section{概要}
-\label{sec:orga2eca21}
+\label{sec:orgf519816}
 
 共有されたオブジェクトの破壊的操作を試みる際に，
 事前にオブジェクト全体を複製するのではなく，
@@ -62,7 +62,7 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 \section{背景}
-\label{sec:orgea18153}
+\label{sec:org290e713}
 
 従来のプログラミング言語におけるデータの持ち方の考え方
 \begin{description}
@@ -139,18 +139,18 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 しかも，後で「使うかもしれない」ということは使わない可能性もある
-\begin{itemize}
-\item つまり，既存のパラダイムでは
+
+つまり，既存のパラダイムでは
 \begin{enumerate}
 \item 「事前に莫大なコストを払い」，
 \item 「後で古いものを使うときのコストはゼロ」としていた
 \end{enumerate}
-\item しかし，基本的には \textbf{\textbf{新しいものを使う可能性が高い}} と考えられるので，
+
+しかし，基本的には \textbf{\textbf{新しいものを使う可能性が高い}} と考えられるので，
 \begin{enumerate}
 \item 「事前のコストは最小化」した上で，
 \item 後で「古いものを使いたくなったら（多少の）コストを払って戻す」ようにしたい
 \end{enumerate}
-\end{itemize}
 
 
 そこで，
@@ -171,9 +171,58 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 \end{enumerate}
 
 
+\section{提案手法}
+\label{sec:orgbd91694}
+
+破壊的更新の履歴を木構造で管理する．
+
+欲しいオブジェクトに対応する葉と
+現時点で最新のオブジェクトに対応する葉の間のパスの
+ノードにある操作（逆操作）を実行しながらこれらのノードを逆向きにつなぎ直す．
+
+素朴な手法なので要改良．
+
+最古のノードから最新のオブジェクトに対応するノードまでのパスを
+Main stream と呼ぶことにする．
+Main stream から派生したパス（Main stream から取り残されてしまったブランチ）を
+Sub stream と呼ぶことにする．
+\begin{itemize}
+\item Master stream と Sub stream は区別できる必要がある（タグをつけておく）
+\end{itemize}
+
+
+オブジェクトが最新かどうかはそれが参照する履歴ノードが Master stream 上にあり，
+かつその次の履歴ノードが存在しない（Master stream の最新である）かで確認できる．
+\begin{itemize}
+\item より効率化するためにオブジェクト自体にフラグを用意しておくことも考えられる．
+\end{itemize}
+
+
+オブジェクトが最新でなかった場合は
+\begin{itemize}
+\item オブジェクトが参照する履歴ノードが Sub stream 上であった場合は
+\begin{enumerate}
+\item Sub stream を上へたどっていき，
+\item LCA に到達したら Master stream を下へ（次へ）
+最新のオブジェクトに紐づいている履歴ノードまで辿っていき，
+\item Master stream 上の操作（逆操作）を帰りがけ順に実行しながら，
+履歴ノードに登録されている操作を履歴ノードに元々あった操作の逆操作（順操作）で更新して
+Sub stream のノードにする
+\item Sub stream 上の操作（逆操作）を帰りがけ順に実行しながら，
+履歴ノードに登録されている操作を履歴ノードに元々あった操作の逆操作（順操作）で更新して
+Master stream のノードにする
+\end{enumerate}
+\item オブジェクトが参照する履歴ノードが Master stream 上であった場合は
+上記の 2 -- 3 を実行する
+\end{itemize}
+
+
+というだけ（これ以上ないくらい非常にシンプル）
+
+
 
 \section{メモ}
-\label{sec:orgba5dcdc}
+\label{sec:org0ff0bb8}
 
 差分リストはリストよりも強力なデータ構造
 \begin{itemize}
@@ -186,7 +235,7 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 \section{2021/10/10}
-\label{sec:org07a6292}
+\label{sec:org7051d2d}
 
 提案手法は，単に共有物に対して破壊的操作を行っている場合は履歴を保持するというだけ．
 \begin{itemize}
