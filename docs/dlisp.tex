@@ -1,4 +1,4 @@
-% Created 2021-10-11 Mon 12:05
+% Created 2021-10-11 Mon 12:15
 % Intended LaTeX compiler: pdflatex
 \documentclass[10pt, a4j, twocolumn]{scrartcl}
                \usepackage{amsmath}
@@ -70,7 +70,7 @@
 
 
 \section{概要}
-\label{sec:org5d3b037}
+\label{sec:orgda8f7e0}
 
 共有されたオブジェクトの破壊的操作を試みる際に，
 事前にオブジェクト全体を複製するのではなく，
@@ -84,10 +84,10 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 \section{導入}
-\label{sec:orga26e51b}
+\label{sec:orgbf33f35}
 
 \subsection{背景}
-\label{sec:org853655d}
+\label{sec:org37ba2d8}
 
 従来のプログラミング言語におけるデータの持ち方の考え方
 \begin{description}
@@ -201,28 +201,39 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 \subsection{先行研究}
-\label{sec:org368131c}
+\label{sec:org17665d4}
 
 要調査
 
-可逆プログラミング
+\subsubsection{可逆プログラミング}
+\label{sec:org3026820}
 \begin{description}
 \item[{Janus}] 低レベルでグラフのようなデータ構造を扱うことまで頭が回っていないように見える（要調査）
 \end{description}
 
 
+\subsubsection{Haskell の DList や高階関数を用いた手法}
+\label{sec:orga06d4e0}
+\begin{itemize}
+\item Thunk が大量発生するのでメモリ効率が悪い
+\item 正格の場合は head をとるために \(O(n)\) かかる（と思うのだがもっと調べる必要がある）
+\item いづれにせよ，破壊的な接続よりも効率的だとは思えない
+\item また，これらの手法は決して自明ではない
+（グラフへの拡張を考えたときに不利なはず）
+\end{itemize}
+
 
 \subsection{本稿の構成}
-\label{sec:org19705ee}
+\label{sec:org079eceb}
 
 todo
 
 
 \section{提案手法}
-\label{sec:org1539bc4}
+\label{sec:org70f3be2}
 
 \subsection{概要}
-\label{sec:org8a1c891}
+\label{sec:org90f2560}
 
 破壊的更新の履歴を木構造で管理する．
 
@@ -278,9 +289,9 @@ Master stream のノードにする
 
 
 \subsection{実装}
-\label{sec:orgdab44c6}
+\label{sec:orgc4fc002}
 
-\lstset{language=Caml,label=orgb9d8f77,caption={History node},captionpos=b,numbers=none}
+\lstset{language=Caml,label=orgb9a9884,caption={History node},captionpos=b,numbers=none}
 \begin{lstlisting}
 type history_node =
   | Main of
@@ -295,7 +306,7 @@ type history_node =
 \end{lstlisting}
 
 
-\lstset{language=Caml,label=orge58861a,caption={Update},captionpos=b,numbers=none}
+\lstset{language=Caml,label=org57dd08d,caption={Update},captionpos=b,numbers=none}
 \begin{lstlisting}
 (** Main stream を辿りながら帰りがけに逆実行する．
 辿ってきた node は sub stream 化して逆順につなぐ．
@@ -344,9 +355,9 @@ let update = traverse_history None
 
 
 \section{例題}
-\label{sec:org4d7a420}
+\label{sec:orgdf3b73b}
 
-\lstset{language=Lisp,label=orgf2a1719,caption={Append},captionpos=b,numbers=none}
+\lstset{language=Lisp,label=org08fdaea,caption={Append},captionpos=b,numbers=none}
 \begin{lstlisting}
 ;; ++ は append
 
@@ -392,11 +403,11 @@ let update = traverse_history None
 
 
 \section{課題}
-\label{sec:org06367eb}
+\label{sec:org81f069a}
 
 occur checking はまだ実装していないので
 
-\lstset{language=Lisp,label=orgc280fe8,caption={Circle},captionpos=b,numbers=none}
+\lstset{language=Lisp,label=orgdae780b,caption={Circle},captionpos=b,numbers=none}
 \begin{lstlisting}
 (let ((x '(1 2 3)))
   (let ((y (++ x x)))
@@ -435,7 +446,7 @@ Occur checking の（素朴な）実装は Union-find を用いれば良い．
 
 
 \section{まとめ}
-\label{sec:org343a82a}
+\label{sec:orgac7aeeb}
 
 共有されたオブジェクトの破壊的操作を試みる際に，
 事前にオブジェクト全体を複製するのではなく，
@@ -451,7 +462,7 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 \section{メモ}
-\label{sec:org56291b1}
+\label{sec:orgbd96150}
 
 差分リストはリストよりも強力なデータ構造
 \begin{itemize}
@@ -464,7 +475,7 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 \section{2021/10/10}
-\label{sec:org6be18db}
+\label{sec:org9f3895c}
 
 提案手法は，単に共有物に対して破壊的操作を行っている場合は履歴を保持するというだけ．
 \begin{itemize}
