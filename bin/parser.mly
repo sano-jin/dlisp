@@ -73,6 +73,13 @@ exp:
              ref @@ Main (unique (), (nil_ref, init_nil), None))
     }
 
+  | LPAREN RPAREN
+    { let nil_ref = ref Nil in
+      let init_nil = Cons (Atom "root", nil_ref) in
+      DList (nil_ref, nil_ref,
+             ref @@ Main (unique (), (nil_ref, init_nil), None))
+    }
+
   | QUOTE exp
     { let nil_ref = ref Nil in
       let init_nil = Cons (Atom "root", nil_ref) in

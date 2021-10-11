@@ -18,7 +18,7 @@ and history_node =
   | Main of int * (node ref * node) * history_node ref option
   | Sub of int * (node ref * node) * history_node ref
 
-and env = (string * value) list
+and env = (string * value ref) list ref
 (** environment e.g. [("x", 1); ("y", 2)]*)
 
 let rec string_of_value = function

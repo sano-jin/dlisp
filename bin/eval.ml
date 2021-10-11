@@ -8,8 +8,8 @@ open History
 let rec eval env = function
   | Atom id ->
       let value =
-        match List.assoc_opt id env with
-        | Some value -> value
+        match List.assoc_opt id !env with
+        | Some value -> !value
         | None -> failwith @@ "variable " ^ id ^ " not found"
       in
       (match value with
@@ -26,10 +26,7 @@ let rec eval env = function
           prerr_endline @@ "    >>>   ---> " ^ string_of_value this_dlist
       | _ -> ());
       value
-  | Number _ as number -> number
-  | Bool _ as bool -> bool
-  | String _ as string -> string
-  | Closure _ as closure -> closure
+  | (Number _ | Bool _ | String _ | Closure _) as value -> value
   | DList (head_ref, _, history_ref) as this_dlist -> (
       (* 履歴を辿って，データを更新 *)
       update history_ref;
@@ -47,6 +44,38 @@ let rec eval env = function
       | Atom "+" :: args -> Number (eval_binop_num ( + ) 0 args)
       | Atom "*" :: args -> Number (eval_binop_num ( * ) 1 args)
       | [ Atom "quote"; value ] -> value
+      | [ Atom "if"; cond; exp1; exp2 ] -> (
+          match eval env cond with
+          | Bool bool -> if bool then eval env exp1 else eval env exp2
+          | value -> failwith @@ "expected boolean: " ^ string_of_value value)
+      | [ Atom "car"; value ] -> (
+          match eval env value with
+          | DList (head_ref, _, history_ref) -> (
+              update history_ref;
+              match !head_ref with
+              | Nil -> failwith @@ "cannot car with nil"
+              | Cons (value, _) -> eval env value)
+          | value -> failwith @@ "cannot car with " ^ string_of_value value)
+      | [ Atom "null?"; value ] -> (
+          match eval env value with
+          | DList (head_ref, _, history_ref) -> (
+              update history_ref;
+              match !head_ref with Nil -> Bool true | Cons _ -> Bool false)
+          | _ -> Bool false)
+      | [ Atom "cdr"; value ] -> (
+          match eval env value with
+          | DList (head_ref, tail_ref, history_ref) -> (
+              update history_ref;
+              match !head_ref with
+              | Nil -> failwith @@ "cannot car with nil"
+              | Cons (_, next_ref) -> DList (next_ref, tail_ref, history_ref))
+          | value -> failwith @@ "cannot cdr with " ^ string_of_value value)
+      | [ Atom "cons"; head; tail ] -> (
+          match (eval env head, eval env tail) with
+          | head, DList (head_ref, tail_ref, history_ref) ->
+              update history_ref;
+              DList (ref (Cons (head, head_ref)), tail_ref, history_ref)
+          | _, tail -> failwith @@ "cannot cons with " ^ string_of_value tail)
       | [ Atom "lambda"; DList (arg_head_ref, _, arg_history_ref); body ] ->
           update arg_history_ref;
           let args = list_of_node_ref arg_head_ref in
@@ -61,10 +90,22 @@ let rec eval env = function
       | [ Atom "let"; binds; body ] ->
           let binding_of bind =
             match extract_dlist bind with
-            | [ Atom id; value ] -> (id, eval env value)
+            | [ Atom id; value ] -> (id, ref (eval env value))
             | _ -> failwith @@ "error: invalid binding"
           in
-          let env = List.map binding_of (extract_dlist binds) @ env in
+          let env = ref (List.map binding_of (extract_dlist binds) @ !env) in
+          eval env body
+      | [ Atom "letrec"; binds; body ] ->
+          let binding_of bind =
+            match extract_dlist bind with
+            | [ Atom id; value ] -> (id, value)
+            | _ -> failwith @@ "invalid binding: " ^ string_of_value bind
+          in
+          let bindings = List.map binding_of @@ extract_dlist binds in
+          let eval_binding (var, exp) =
+            env := (var, ref (eval env exp)) :: !env
+          in
+          List.iter eval_binding bindings;
           eval env body
       | [ Atom "++"; list1; list2 ] -> (
           match (eval env list1, eval env list2) with
@@ -86,9 +127,9 @@ let rec eval env = function
               @@ "both argments are expected to be lists with an append op")
       | f :: args -> (
           match eval env f with
-          | Closure (vars, body, env) ->
-              let arg_values = List.map (eval env) args in
-              let env = List.combine vars arg_values @ env in
-              eval env body
+          | Closure (vars, body, new_env) ->
+              let arg_values = List.map (ref <. eval env) args in
+              let new_env = ref (List.combine vars arg_values @ !new_env) in
+              eval new_env body
           | f -> failwith @@ string_of_value f ^ " is expected to be a function"
           ))
