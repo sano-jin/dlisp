@@ -1,5 +1,5 @@
 #+TITLE: DLisp
-#+SUBTITLE: Differential List Processor @@latex:\\@@ <https://github.com/sano-jin/dlisp>
+#+SUBTITLE: Difference List Processor @@latex:\\@@ <https://github.com/sano-jin/dlisp>
 #+LaTeX_CLASS: koma-jarticle
 #+LATEX_CMD: xelatex
 #+latex_header: \usepackage{style}
