@@ -44,6 +44,8 @@ let rec eval env = function
       match list with
       | [] -> this_dlist
       | Atom "+" :: args -> Number (eval_binop_num ( + ) 0 args)
+      | Atom "-" :: arg :: args ->
+          Number (extract_number (eval env arg) - eval_binop_num ( + ) 0 args)
       | Atom "*" :: args -> Number (eval_binop_num ( * ) 1 args)
       | [ Atom "quote"; value ] -> value
       | [ Atom "if"; cond; exp1; exp2 ] -> (
