@@ -23,12 +23,6 @@
 (* End of file *)
 %token EOF 
 
-(*
-(* Operator associativity *)
-%nonassoc DOT
-%nonassoc LPAREN
-*)
-
 %start main
 %type <Syntax.value> main
 

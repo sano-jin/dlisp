@@ -1,4 +1,4 @@
-% Created 2021-10-11 Mon 16:11
+% Created 2021-10-12 Tue 17:28
 % Intended LaTeX compiler: pdflatex
 \documentclass[10pt, a4j, twocolumn]{scrartcl}
                \usepackage{amsmath}
@@ -60,8 +60,6 @@
 
 \item 実装
 \begin{itemize}
-\item car, cdr, cons などの builtin 関数
-\item Occur checking
 \item 実装の容易さのために一度 OCaml のリストに変換してから評価しているので，
 差分リストのまま扱うようにする
 \item 履歴の最適化（の検討）
@@ -70,7 +68,7 @@
 
 
 \section{概要}
-\label{sec:org679e9b3}
+\label{sec:org870d4a1}
 
 共有されたオブジェクトの破壊的操作を試みる際に，
 事前にオブジェクト全体を複製するのではなく，
@@ -86,10 +84,13 @@ DLisp は append が \(O(1)\) で可能である
 
 
 \section{導入}
-\label{sec:org901dab9}
+\label{sec:orgc9aee2e}
 
 \subsection{背景}
-\label{sec:org66546d4}
+\label{sec:orgcf22e67}
+
+\subsubsection{既存の（言語における）手法}
+\label{sec:org1c1fe5c}
 
 従来のプログラミング言語におけるデータの持ち方の考え方
 \begin{description}
@@ -152,6 +153,8 @@ DLisp は append が \(O(1)\) で可能である
 \end{description}
 
 
+\subsubsection{提案手法のモチベーションと導入}
+\label{sec:orgab386f5}
 
 まとめると，既存の言語では，基本的には「後で元のオブジェクトも使うかもしれないとき」は事前にそのオブジェクト全体を複製する
 \begin{itemize}
@@ -203,19 +206,19 @@ DLisp は append が \(O(1)\) で可能である
 
 
 \subsection{先行研究}
-\label{sec:orga38fd24}
+\label{sec:org99d6785}
 
 要調査
 
 \subsubsection{可逆プログラミング}
-\label{sec:org7eba6c1}
+\label{sec:orge2616bb}
 \begin{description}
 \item[{Janus}] 低レベルでグラフのようなデータ構造を扱うことまで頭が回っていないように見える（要調査）
 \end{description}
 
 
 \subsubsection{Haskell の DList や高階関数を用いた手法}
-\label{sec:org4148923}
+\label{sec:org884b901}
 \begin{itemize}
 \item Thunk が大量発生するのでメモリ効率が悪い
 \item 正格の場合は head をとるために \(O(n)\) かかる（と思うのだがもっと調べる必要がある）
@@ -226,16 +229,18 @@ DLisp は append が \(O(1)\) で可能である
 
 
 \subsection{本稿の構成}
-\label{sec:orge84f69d}
+\label{sec:org78ad6c8}
 
-todo
+In section \ref{sec:proposal} we briefly introduce the implementation
 
 
 \section{提案手法}
-\label{sec:orgaedb3e7}
+\label{sec:org773aa7b}
+
+\label{sec:proposal}
 
 \subsection{概要}
-\label{sec:orge2bc0a9}
+\label{sec:orgc9bffcc}
 
 破壊的更新の履歴を木構造で管理する．
 
@@ -291,9 +296,9 @@ Master stream のノードにする
 
 
 \subsection{実装}
-\label{sec:orgb049d9c}
+\label{sec:org41932ba}
 
-\lstset{language=Caml,label=orge62b4a9,caption={History node},captionpos=b,numbers=none}
+\lstset{language=Caml,label=orge48e872,caption={History node},captionpos=b,numbers=none}
 \begin{lstlisting}
 type history_node =
   | Main of
@@ -308,7 +313,7 @@ type history_node =
 \end{lstlisting}
 
 
-\lstset{language=Caml,label=orgd9ceb1e,caption={Update},captionpos=b,numbers=none}
+\lstset{language=Caml,label=org1cfc72c,caption={Update},captionpos=b,numbers=none}
 \begin{lstlisting}
 (** Main stream を辿りながら帰りがけに逆実行する．
 辿ってきた node は sub stream 化して逆順につなぐ．
@@ -357,9 +362,9 @@ let update = traverse_history None
 
 
 \section{例題}
-\label{sec:orgcfbd616}
+\label{sec:org9086482}
 
-\lstset{language=Lisp,label=org12e56ff,caption={Append},captionpos=b,numbers=none}
+\lstset{language=Lisp,label=orgc62c0a3,caption={Append},captionpos=b,numbers=none}
 \begin{lstlisting}
 ;; ++ は append
 
@@ -405,11 +410,14 @@ let update = traverse_history None
 
 
 \section{課題}
-\label{sec:orgbf56280}
+\label{sec:orgb0d91b7}
 
-occur checking はまだ実装していないので
+\subsection{Occur checking}
+\label{sec:orged8cc1f}
 
-\lstset{language=Lisp,label=org4aac1f2,caption={Circle},captionpos=b,numbers=none}
+自分自身を含むオブジェクトを連結してしまうと，循環してしまうため（素朴な手法では）評価が無限ループしてしまう．
+
+\lstset{language=Lisp,label=org3478d66,caption={Circle},captionpos=b,numbers=none}
 \begin{lstlisting}
 (let ((x '(1 2 3)))
   (let ((y (++ x x)))
@@ -421,15 +429,18 @@ occur checking はまだ実装していないので
   )
 \end{lstlisting}
 
-このように自分自身を含む差分リストを連結できてしまい，
-その場合はグラフが循環するため，
-評価しようとすると無限ループし， \texttt{Stack\_overflow} する．
+これを防ぐためには連結の前に Occur checking，
+つまり連結しようとしているオブジェクトに「重なり」がないかをチェックしてやれば良い．
 
 Occur checking の（素朴な）実装は Union-find を用いれば良い．
 差分リストの id（オブジェクトのアドレスを用いれば良い）で素集合データ構造を作ってやれば，
 アッカーマン関数の逆関数のオーダで自分自身を含む差分リストを連結しようとしてないかが判別できる．
+本実装ではそのようになっている．
 もちろん理想的には静的に所有権解析などを行うことで，
 この動的な手間はほとんどの例で削減が可能と思われる．
+\begin{itemize}
+\item より理想的には SMT solver などを用いて等式論理を解くものと思われる
+\end{itemize}
 
 自分自身を含む差分リストを連結しようとしている場合は，残念ながら従来の append を行う他ないと思われる．
 \begin{itemize}
@@ -438,7 +449,8 @@ Occur checking の（素朴な）実装は Union-find を用いれば良い．
 \end{itemize}
 
 
-その他最適化手法
+\subsection{その他最適化手法}
+\label{sec:org20d4bd0}
 \begin{itemize}
 \item 現実装は，すごく安直で，
 全ての操作を逆実行する（Nil（未具現化変数）の更新（具現化）をした部分もわざわざ戻す）が，
@@ -450,7 +462,7 @@ Occur checking の（素朴な）実装は Union-find を用いれば良い．
 
 
 \section{まとめ}
-\label{sec:org6a133aa}
+\label{sec:org2c07afe}
 
 共有されたオブジェクトの破壊的操作を試みる際に，
 事前にオブジェクト全体を複製するのではなく，
@@ -466,7 +478,7 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 \section{メモ}
-\label{sec:org38579c1}
+\label{sec:org3a98c9e}
 
 差分リストはリストよりも強力なデータ構造
 \begin{itemize}
@@ -479,7 +491,7 @@ DLisp は append が \(O(1)\) で可能である（より正確にはアッカ�
 
 
 \section{2021/10/10}
-\label{sec:org8e255bb}
+\label{sec:org7efbc89}
 
 提案手法は，単に共有物に対して破壊的操作を行っている場合は履歴を保持するというだけ．
 \begin{itemize}

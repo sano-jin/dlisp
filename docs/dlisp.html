@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2021-10-10 Sun 23:21 -->
+<!-- 2021-10-12 Tue 17:17 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>DLisp</title>
@@ -242,24 +242,103 @@
 <div id="content">
 <h1 class="title">DLisp
 <br />
-<span class="subtitle">Differential List Processor</span>
+<span class="subtitle">Difference List Processor  <a href="https://github.com/sano-jin/dlisp">https://github.com/sano-jin/dlisp</a></span>
 </h1>
 <div id="table-of-contents">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents">
 <ul>
-<li><a href="#org3d63984">1. 概要</a></li>
-<li><a href="#org82fd279">2. メモ</a></li>
-<li><a href="#orgca92e4d">3. 2021/10/10</a></li>
+<li><a href="#orge56f841">1. 概要</a></li>
+<li><a href="#org85119bf">2. 導入</a>
+<ul>
+<li><a href="#org3eeaa94">2.1. 背景</a>
+<ul>
+<li><a href="#org559260d">2.1.1. 既存の（言語における）手法</a></li>
+<li><a href="#org3a50758">2.1.2. 提案手法のモチベーションと導入</a></li>
+</ul>
+</li>
+<li><a href="#orgb996ff8">2.2. 先行研究</a>
+<ul>
+<li><a href="#orgd79cb53">2.2.1. 可逆プログラミング</a></li>
+<li><a href="#orgd2b23b3">2.2.2. Haskell の DList や高階関数を用いた手法</a></li>
+</ul>
+</li>
+<li><a href="#orgc6f7454">2.3. 本稿の構成</a></li>
+</ul>
+</li>
+<li><a href="#orgf135bf6">3. 提案手法</a>
+<ul>
+<li><a href="#orga009e14">3.1. 概要</a></li>
+<li><a href="#org918e6c9">3.2. 実装</a></li>
+</ul>
+</li>
+<li><a href="#org01e08aa">4. 例題</a></li>
+<li><a href="#orga565c98">5. 課題</a></li>
+<li><a href="#org500a7e3">6. まとめ</a></li>
+<li><a href="#org0a19aed">7. メモ</a></li>
+<li><a href="#org671696c">8. 2021/10/10</a></li>
 </ul>
 </div>
 </div>
+<p>
+\vspace{1em}
+</p>
+
+<p>
+<b><b>TODO</b></b> 
+</p>
+
+<ul class="org-ul">
+<li>提案書
+<ul class="org-ul">
+<li>関連研究を載せる</li>
+<li>参考文献を書く（org-mode での書き方がよくわからない）</li>
+<li>提案手法を説明する図を追加する</li>
+<li>モチベをもっとクリアにする</li>
+</ul></li>
+
+<li>実装
+<ul class="org-ul">
+<li>実装の容易さのために一度 OCaml のリストに変換してから評価しているので，
+差分リストのまま扱うようにする</li>
+<li>履歴の最適化（の検討）</li>
+</ul></li>
+</ul>
 
 
-
-<div id="outline-container-org3d63984" class="outline-2">
-<h2 id="org3d63984"><span class="section-number-2">1</span> 概要</h2>
+<div id="outline-container-orge56f841" class="outline-2">
+<h2 id="orge56f841"><span class="section-number-2">1</span> 概要</h2>
 <div class="outline-text-2" id="text-1">
+<p>
+共有されたオブジェクトの破壊的操作を試みる際に，
+事前にオブジェクト全体を複製するのではなく，
+操作の履歴を発行することで，
+過去の状態を復元できる手段を残しながら，
+最新のオブジェクトを手にいれるコストを最小化する手法を提案する．
+</p>
+
+<p>
+この手法が顕著に活かせる例として，
+アトムと差分リストのみからなる Lisp 派生言語 DLisp を実装した．
+DLisp は append が \(O(1)\) で可能である
+（より正確には（リストの長さではなく）append の回数のアッカーマン関数の逆関数だが，
+これは多くの場合静的解析で削減可能と考えられる）．
+</p>
+</div>
+</div>
+
+
+<div id="outline-container-org85119bf" class="outline-2">
+<h2 id="org85119bf"><span class="section-number-2">2</span> 導入</h2>
+<div class="outline-text-2" id="text-2">
+</div>
+<div id="outline-container-org3eeaa94" class="outline-3">
+<h3 id="org3eeaa94"><span class="section-number-3">2.1</span> 背景</h3>
+<div class="outline-text-3" id="text-2-1">
+</div>
+<div id="outline-container-org559260d" class="outline-4">
+<h4 id="org559260d"><span class="section-number-4">2.1.1</span> 既存の（言語における）手法</h4>
+<div class="outline-text-4" id="text-2-1-1">
 <p>
 従来のプログラミング言語におけるデータの持ち方の考え方
 </p>
@@ -289,6 +368,9 @@
 <li>そもそも append などのコストがかかる作業を避けるプログラムを意識的に書く傾向にある</li>
 <li>データ構造をめちゃめちゃ工夫して「償却時間は」\(O(1)\) のアルゴリズムを発明する傾向にある
 <ul class="org-ul">
+<li><a href="https://hackage.haskell.org/package/dlist">https://hackage.haskell.org/package/dlist</a></li>
+<li><a href="https://wiki.haskell.org/Difference_list">https://wiki.haskell.org/Difference_list</a></li>
+<li><a href="https://okmij.org/ftp/Haskell/zseq.pdf">https://okmij.org/ftp/Haskell/zseq.pdf</a></li>
 <li>ただし，あくまで「償却時間」であり，毎回それが保証されるわけではない</li>
 <li>「工夫」はあまり自明でない</li>
 <li>「工夫」のために無駄な中間データ構造を要求する場合が多い
@@ -318,9 +400,13 @@
 </ul></li>
 </ul></dd>
 </dl>
+</div>
+</div>
 
 
-
+<div id="outline-container-org3a50758" class="outline-4">
+<h4 id="org3a50758"><span class="section-number-4">2.1.2</span> 提案手法のモチベーションと導入</h4>
+<div class="outline-text-4" id="text-2-1-2">
 <p>
 まとめると，既存の言語では，基本的には「後で元のオブジェクトも使うかもしれないとき」は事前にそのオブジェクト全体を複製する
 </p>
@@ -340,27 +426,33 @@
 <p>
 しかも，後で「使うかもしれない」ということは使わない可能性もある
 </p>
-<ul class="org-ul">
-<li>つまり，既存のパラダイムでは
+
+<p>
+つまり，既存のパラダイムでは
+</p>
 <ol class="org-ol">
 <li>「事前に莫大なコストを払い」，</li>
 <li>「後で古いものを使うときのコストはゼロ」としていた</li>
-</ol></li>
-<li>しかし，基本的には <b><b>新しいものを使う可能性が高い</b></b> と考えられるので，
+</ol>
+
+<p>
+しかし，基本的には <b><b>新しいものを使う可能性が高い</b></b> と考えられるので，
+</p>
 <ol class="org-ol">
 <li>「事前のコストは最小化」した上で，</li>
 <li>後で「古いものを使いたくなったら（多少の）コストを払って戻す」ようにしたい</li>
-</ol></li>
-</ul>
+</ol>
 
 
 <p>
 そこで，
 </p>
 <ol class="org-ol">
-<li>「後で元のオブジェクトも使うかもしれない」のに，破壊的更新を行うときは，「破壊的操作の履歴」をコミットすることにする
+<li>「後で元のオブジェクトも使うかもしれない」のに，
+破壊的更新を行うときは，「破壊的操作の履歴」をコミットすることにする
 <ul class="org-ul">
-<li>このコミットは単にアドレスとそこに代入した値のペアさえあればよく，「オブジェクト全体の複製」などよりも遥かに低コストである</li>
+<li>このコミットは単にアドレスとそこに代入した値のペアさえあればよく，
+「オブジェクト全体の複製」などよりも遥かに低コストである</li>
 </ul></li>
 <li>新しいものを使い続ける場合は上記の履歴のコミット以外のコストは払わない
 <ul class="org-ul">
@@ -368,27 +460,349 @@
 </ul></li>
 <li>古いものに戻したい場合は，「（多少の）コストを払って復元する」
 <ul class="org-ul">
-<li>基本的に新しいものを使い続けることの方が多いはずなので，古いものを欲しがる人にコストを払わせる</li>
-<li>ただし，このコストはあくまで破壊的更新の回数（append の回数など）であり，純粋にできる部分は純粋に保っていたらそこまで大きくはならないはず</li>
+<li>基本的に新しいものを使い続けることの方が多いはずなので，
+<b><b>古いものを欲しがる人にコストを払わせる</b></b></li>
+<li>ただし，このコストはあくまで破壊的更新の回数（append の回数など）であり，
+純粋にできる部分は純粋に保っていたらそこまで大きくはならないはず</li>
 </ul></li>
 </ol>
 </div>
 </div>
+</div>
+
+
+<div id="outline-container-orgb996ff8" class="outline-3">
+<h3 id="orgb996ff8"><span class="section-number-3">2.2</span> 先行研究</h3>
+<div class="outline-text-3" id="text-2-2">
+<p>
+要調査
+</p>
+</div>
+
+<div id="outline-container-orgd79cb53" class="outline-4">
+<h4 id="orgd79cb53"><span class="section-number-4">2.2.1</span> 可逆プログラミング</h4>
+<div class="outline-text-4" id="text-2-2-1">
+<dl class="org-dl">
+<dt>Janus</dt><dd>低レベルでグラフのようなデータ構造を扱うことまで頭が回っていないように見える（要調査）</dd>
+</dl>
+</div>
+</div>
+
+
+<div id="outline-container-orgd2b23b3" class="outline-4">
+<h4 id="orgd2b23b3"><span class="section-number-4">2.2.2</span> Haskell の DList や高階関数を用いた手法</h4>
+<div class="outline-text-4" id="text-2-2-2">
+<ul class="org-ul">
+<li>Thunk が大量発生するのでメモリ効率が悪い</li>
+<li>正格の場合は head をとるために \(O(n)\) かかる（と思うのだがもっと調べる必要がある）</li>
+<li>いづれにせよ，破壊的な接続よりも効率的だとは思えない</li>
+<li>また，これらの手法は決して自明ではない
+（グラフへの拡張を考えたときに不利なはず）</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-orgc6f7454" class="outline-3">
+<h3 id="orgc6f7454"><span class="section-number-3">2.3</span> 本稿の構成</h3>
+<div class="outline-text-3" id="text-2-3">
+<p>
+In section \ref{sec:proposal} we briefly introduce the implementation
+</p>
+</div>
+</div>
+</div>
+
+<div id="outline-container-orgf135bf6" class="outline-2">
+<h2 id="orgf135bf6"><span class="section-number-2">3</span> 提案手法</h2>
+<div class="outline-text-2" id="text-3">
+<p>
+\label{sec:proposal}
+</p>
+</div>
+
+<div id="outline-container-orga009e14" class="outline-3">
+<h3 id="orga009e14"><span class="section-number-3">3.1</span> 概要</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+破壊的更新の履歴を木構造で管理する．
+</p>
+
+<p>
+欲しいオブジェクトに対応する葉と
+現時点で最新のオブジェクトに対応する葉の間のパスの
+ノードにある操作（逆操作）を実行しながらこれらのノードを逆向きにつなぎ直す．
+</p>
+
+<p>
+最古のノードから最新のオブジェクトに対応するノードまでのパスを
+Main stream と呼ぶことにする．
+Main stream から派生したパス（Main stream から取り残されてしまったブランチ）を
+Sub stream と呼ぶことにする．
+</p>
+<ul class="org-ul">
+<li>Master stream と Sub stream は区別できる必要がある（タグをつけておく）</li>
+<li>と思っていたが，その必要はないかも知れない．
+統一した方がより綺麗に実装できる．
+ただ，区別していた方が理解が容易である気もするのでとりあえずこのままにしておく．</li>
+</ul>
+
+
+
+<p>
+オブジェクトが最新かどうかはそれが参照する履歴ノードが Master stream 上にあり，
+かつその次の履歴ノードが存在しない（Master stream の最新である）かで確認できる．
+</p>
+<ul class="org-ul">
+<li>より効率化するためにオブジェクト自体にフラグを用意しておくことも考えられる．</li>
+</ul>
+
+
+<p>
+オブジェクトが最新でなかった場合は
+</p>
+<ul class="org-ul">
+<li>オブジェクトが参照する履歴ノードが Sub stream 上であった場合は
+<ol class="org-ol">
+<li>Sub stream を上へたどっていき，</li>
+<li>LCA に到達したら Master stream を下へ（次へ）
+最新のオブジェクトに紐づいている履歴ノードまで辿っていき，</li>
+<li>Master stream 上の操作（逆操作）を帰りがけ順に実行しながら，
+履歴ノードに登録されている操作を履歴ノードに元々あった操作の逆操作（順操作）で更新して
+Sub stream のノードにする</li>
+<li>Sub stream 上の操作（逆操作）を帰りがけ順に実行しながら，
+履歴ノードに登録されている操作を履歴ノードに元々あった操作の逆操作（順操作）で更新して
+Master stream のノードにする</li>
+</ol></li>
+<li>オブジェクトが参照する履歴ノードが Master stream 上であった場合は
+上記の 2 &#x2013; 3 を実行する</li>
+</ul>
+
+
+<p>
+というだけ（これ以上ないくらい非常にシンプル）
+</p>
+
+<p>
+ただし，素朴な手法なので要改良である．
+</p>
+<ul class="org-ul">
+<li>特に差分リストの場合はもっと最適化できる</li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-org918e6c9" class="outline-3">
+<h3 id="org918e6c9"><span class="section-number-3">3.2</span> 実装</h3>
+<div class="outline-text-3" id="text-3-2">
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 1: </span>History node</label><pre class="src src-ocaml" id="org0c9ba55">type history_node =
+  | Main of
+      (node ref * node) *
+      history_node ref option
+  | Sub of
+      (node ref * node) *
+      history_node ref
+(* node は 差分リストのノード．
+ * 現在履歴を管理するデータは差分リストのノードだけ
+ *)
+</pre>
+</div>
+
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 2: </span>Update</label><pre class="src src-ocaml" id="org4096e64">(** Main stream を辿りながら帰りがけに逆実行する．
+辿ってきた node は sub stream 化して逆順につなぐ．
+*)
+let rec traverse_main_stream parent_ref this_ref =
+  match !this_ref with
+  | Sub _ -&gt; 
+      failwith @@ "substream should not be reached from main stream"
+  | Main ((addr, value), next_ref_opt) -&gt;
+      (match next_ref_opt with
+      | None -&gt; ()
+      | Some next_ref -&gt; traverse_main_stream this_ref next_ref);
+      let old_value = !addr in
+      addr := value;
+      this_ref := Sub ((addr, old_value), parent_ref)
+
+(** 履歴を辿る．
++ Sub stream を上へ辿って行き，
++ Main stream (LCA) に辿り着いたら（ただし，LCA の操作は実行しない），[traverse_main_stream] を実行し，
++ その後帰りがけ順に sub stream を順実行しながらこれを main stream 化する．
+*)
+let rec traverse_history next_ref_opt this_ref =
+  match !this_ref with
+  | Sub ((addr, value), parent_ref) -&gt;
+      traverse_history (Some this_ref) parent_ref;
+      let old_value = !addr in
+      addr := value;
+      this_ref := Main ((addr, old_value), next_ref_opt)
+  | Main (addr_value, old_next_ref_opt) -&gt;
+      (match old_next_ref_opt with
+      | None -&gt; ()
+      | Some old_next_ref -&gt; traverse_main_stream this_ref old_next_ref);
+      this_ref := Main (addr_value, next_ref_opt)
+
+(** 差分リストを評価する前にはこの関数を実行して，
+履歴を辿って差分リストを最新の状態にし，履歴を更新する必要がある．
+この関数のみ外部に公開しておけば良い．
+*)
+let update = traverse_history None
+</pre>
+</div>
+
+
+<p>
+これだけ．
+</p>
+
+<p>
+しかも，Main stream と Sub stream の区別がいらないなら，コード行は更にこの半分以下になる．
+</p>
+</div>
+</div>
+</div>
+
+
+<div id="outline-container-org01e08aa" class="outline-2">
+<h2 id="org01e08aa"><span class="section-number-2">4</span> 例題</h2>
+<div class="outline-text-2" id="text-4">
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 3: </span>Append</label><pre class="src src-lisp" id="orgf213c74">;; ++ は append
+
+(let ((x '(1 2 3)))
+  (let ((y (++ x '(4 5 6))))
+    (let ((z (++ x '(7 8 9))))
+      (let ((w (++ y '(10 11 12))))
+        (begin
+         (print x)
+         (print y)
+         (print z)
+         (print w)
+         (print x)
+         (print y)
+         (print z)
+         (print w)
+         )
+        )
+      )
+    )
+  )
+</pre>
+</div>
+
+
+<p>
+これの実行結果が
+</p>
+
+<pre class="example" id="org446b6a3">
+(1 2 3)
+(1 2 3 4 5 6)
+(1 2 3 7 8 9)
+(1 2 3 4 5 6 10 11 12)
+(1 2 3)
+(1 2 3 4 5 6)
+(1 2 3 7 8 9)
+(1 2 3 4 5 6 10 11 12)
+(1 2 3 4 5 6 10 11 12)
+</pre>
+
+<p>
+こうなる
+</p>
+<ul class="org-ul">
+<li>print は引数を評価してそれを標準出力に表示して，引数の値を返す built-in 関数</li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-orga565c98" class="outline-2">
+<h2 id="orga565c98"><span class="section-number-2">5</span> 課題</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+occur checking はまだ実装していないので
+</p>
+
+<div class="org-src-container">
+<label class="org-src-name"><span class="listing-number">Listing 4: </span>Circle</label><pre class="src src-lisp" id="org9f48fa0">(let ((x '(1 2 3)))
+  (let ((y (++ x x)))
+    (begin
+     (print x)
+     (print y)
+     )
+    )
+  )
+</pre>
+</div>
+
+<p>
+このように自分自身を含む差分リストを連結できてしまい，
+その場合はグラフが循環するため，
+評価しようとすると無限ループし， <code>Stack_overflow</code> する．
+</p>
+
+<p>
+Occur checking の（素朴な）実装は Union-find を用いれば良い．
+差分リストの id（オブジェクトのアドレスを用いれば良い）で素集合データ構造を作ってやれば，
+アッカーマン関数の逆関数のオーダで自分自身を含む差分リストを連結しようとしてないかが判別できる．
+もちろん理想的には静的に所有権解析などを行うことで，
+この動的な手間はほとんどの例で削減が可能と思われる．
+</p>
+
+<p>
+自分自身を含む差分リストを連結しようとしている場合は，残念ながら従来の append を行う他ないと思われる．
+</p>
+<ul class="org-ul">
+<li>が，そもそも自分自身を連結するコードをユーザがそんな頻繁に書くとは思えない．
+同じものをたくさん並べることは基本的には無意味なので．</li>
+</ul>
+
+
+<p>
+その他最適化手法
+</p>
+<ul class="org-ul">
+<li>現実装は，すごく安直で，
+全ての操作を逆実行する（Nil（未具現化変数）の更新（具現化）をした部分もわざわざ戻す）が，
+差分リストの場合は最適化が可能
+<ul class="org-ul">
+<li>現実装は一般のグラフへの適用を考えた（差分リストに最適化されていない）素朴な手法</li>
+</ul></li>
+</ul>
+</div>
+</div>
+
+
+<div id="outline-container-org500a7e3" class="outline-2">
+<h2 id="org500a7e3"><span class="section-number-2">6</span> まとめ</h2>
+<div class="outline-text-2" id="text-6">
+<p>
+共有されたオブジェクトの破壊的操作を試みる際に，
+事前にオブジェクト全体を複製するのではなく，
+操作の履歴を発行することで，
+過去の状態を復元できる手段を残しながら，
+最新のオブジェクトを手にいれるコストを最小化する手法を提案する．
+</p>
+
+<p>
+この手法が顕著に活かせる例として，
+アトムと差分リストのみからなる Lisp 派生言語 DLisp を実装した．
+DLisp は append が \(O(1)\) で可能である（より正確にはアッカーマン関数の逆関数）．
+</p>
+</div>
+</div>
 
 
 
 
-
-
-
-
-
-
-
-
-<div id="outline-container-org82fd279" class="outline-2">
-<h2 id="org82fd279"><span class="section-number-2">2</span> メモ</h2>
-<div class="outline-text-2" id="text-2">
+<div id="outline-container-org0a19aed" class="outline-2">
+<h2 id="org0a19aed"><span class="section-number-2">7</span> メモ</h2>
+<div class="outline-text-2" id="text-7">
 <p>
 差分リストはリストよりも強力なデータ構造
 </p>
@@ -405,28 +819,35 @@
 </div>
 
 
-<div id="outline-container-orgca92e4d" class="outline-2">
-<h2 id="orgca92e4d"><span class="section-number-2">3</span> 2021/10/10</h2>
-<div class="outline-text-2" id="text-3">
+<div id="outline-container-org671696c" class="outline-2">
+<h2 id="org671696c"><span class="section-number-2">8</span> 2021/10/10</h2>
+<div class="outline-text-2" id="text-8">
 <p>
 提案手法は，単に共有物に対して破壊的操作を行っている場合は履歴を保持するというだけ．
 </p>
 <ul class="org-ul">
 <li>つまり，これはグラフに限らず，例えば配列などに対しても適用可能ではある．</li>
-<li>ただし，配列はめちゃめちゃ破壊的操作を行うため，履歴が大量発生する＆戻すのに操作の数だけ逆操作するため，あんまり嬉しくはない．</li>
-<li>（単方向の）差分リスト（もどき）が嬉しいのは，「末尾の破壊的更新」しかできないということであった．
+<li>ただし，配列はめちゃめちゃ破壊的操作を行うため，
+履歴が大量発生する＆戻すのに操作の数だけ逆操作するため，あんまり嬉しくはない．</li>
+<li>（単方向の）差分リスト（もどき）が嬉しいのは，
+「末尾の破壊的更新」しかできないということであった．
 <ul class="org-ul">
-<li>末尾の破壊的更新以外は純粋にできるため，それらの履歴の保持が不要であり，「履歴のコストが比較的小さい」というメリットがあった．</li>
+<li>末尾の破壊的更新以外は純粋にできるため，それらの履歴の保持が不要であり，
+「履歴のコストが比較的小さい」というメリットがあった．</li>
 <li>これは先週の段階ではぼんやりとしか理解していなかった（ので説明ができなかった）</li>
 <li>こう言った性質をグラフ（の shapetype のような型）において自動的に導出できるのかは不明．</li>
-<li>双方向リストにしてしまうと，Head に cons するだけでも破壊的更新をする必要があり，この履歴も管理せざるを得なくなるため，履歴のコストが無視できなくなる（かも）</li>
-<li>現実装は，すごく安直で，全ての操作を逆実行する（Nil（未具現化変数）の更新（具現化）をした部分もわざわざ戻す）が，こういった部分に関しても差分リストの場合は最適化が可能
+<li>双方向リストにしてしまうと，Head に cons するだけでも破壊的更新をする必要があり，
+この履歴も管理せざるを得なくなるため，履歴のコストが無視できなくなる（かも）</li>
+<li>現実装は，すごく安直で，全ての操作を逆実行する（Nil（未具現化変数）の更新（具現化）をした部分もわざわざ戻す）が，
+こういった部分に関しても差分リストの場合は最適化が可能
 <ul class="org-ul">
 <li>現実装は一般のグラフへの適用を考えた（差分リストに最適化されていない）素朴な手法</li>
 </ul></li>
-<li>差分リストの場合は move 可能な部分は履歴を管理する必要がないというのが僕の直感的な理解（あまりきちんと説明できないのでちゃんと例題を書く必要がある）
+<li>差分リストの場合は move 可能な部分は履歴を管理する必要がないというのが僕の直感的な理解
+（あまりきちんと説明できないのでちゃんと例題を書く必要がある）
 <ul class="org-ul">
-<li>ただし，一般のデータ構造に対してはこれは保証できないことに気づいた（配列の破壊的代入など）</li>
+<li>ただし，一般のデータ構造に対してはこれは保証できないことに気づいた
+（配列の破壊的代入など）</li>
 </ul></li>
 </ul></li>
 </ul>
@@ -444,17 +865,19 @@
 <ul class="org-ul">
 <li>操作の数だけ復元にコストがかかる可能性がある．</li>
 </ul></li>
-<li>が，仮に最適化できなかったとしても，「純粋（風に）にグラフ（破壊的データ構造）を扱う」という「今まで人類ができなかったこと（調べ学習が足りていない感はある）」を実現しているのでこれは価値があると思っている．
+<li>が，仮に最適化できなかったとしても，「純粋（風に）にグラフ（破壊的データ構造）を扱う」という
+「今まで人類ができなかったこと（調べ学習が足りていない感はある）」を実現しているのでこれは価値があると思っている．
 <ul class="org-ul">
 <li>つまり，「今までできていたことをより良くする研究」ではないということ．</li>
 </ul></li>
-<li>提案手法が一般にはコストゼロで途中の move と組み合わせられない（move できる部分は履歴の保持がいらないというのは一般には保証できない）のは痛手であったが，</li>
-</ul>
-<p>
-所有権解析を取り入れている言語は「徹頭徹尾」move させるようにしているので，途中の move があまり最適でないというのは仕方のないことだと言える．
-</p>
+<li>提案手法が一般にはコストゼロで途中の move と組み合わせられない
+（move できる部分は履歴の保持がいらないというのは一般には保証できない）のは痛手であったが，
+所有権解析を取り入れている言語は「徹頭徹尾」move させるようにしているので，
+途中の move があまり最適でないというのは仕方のないことだと言える．
 <ul class="org-ul">
-<li>ただし，差分リストの場合はこれがおそらく可能で，どういうパターンのときにそうなるのかはもっと考える必要がある（考える価値があると思う）</li>
+<li>ただし，差分リストの場合はこれがおそらく可能で，
+どういうパターンのときにそうなるのかはもっと考える必要がある（考える価値があると思う）</li>
+</ul></li>
 </ul>
 
 
@@ -488,25 +911,12 @@
 <ul class="org-ul">
 <li>という非形式的な感想しかないと言われればそこまで．</li>
 </ul></li>
-<li>alim さんの ground を用いた hypergraph による lambda も ground を用いていて，しかもラムダ式は木にちょっと毛が生えたくらいだから提案手法で（効率的に）扱えないと困る．
+<li>alim さんの ground を用いた hypergraph による lambda も ground を用いていて，
+しかもラムダ式は木にちょっと毛が生えたくらいだから提案手法で（効率的に）扱えないと困る．
 <ul class="org-ul">
 <li>この場合，ground のように丸々コピーするよりも遥かに安価である（あって欲しい）</li>
-<li>しかし，そもそも lambda のエンコードの価値が実はあまりよくわからない（失礼！）から，これが最適化されることの意味もよくわからない．</li>
-</ul></li>
-</ul>
-
-
-<p>
-lmntal に関して何かやれば，それでもうほぼ新規性が保証される．とは個人的にはあまり思っていない．
-</p>
-<ul class="org-ul">
-<li>学士・修士レベルではそうだと思うが．</li>
-<li>例えば，lmntal-shapetype は structured-gamma との差分をめちゃめちゃ聞かれる．</li>
-<li>indexed-type は st-gamma にはないので（多分）これは新規性がある．</li>
-<li>が，これは lmntal とは全然関係ない話だと思う．</li>
-<li>「他の言語で実現されていることを lmntal に導入する」というのは（lmntal 独自の特徴を活かせない限り）あまり旨味がなくて，「lmntal が実現していることを（そのままではうまくいかないので工夫して）他の言語に導入する」方が価値があると思っている．
-<ul class="org-ul">
-<li>なぜ lmntal ではダメなの？に対する反論はしなくてはいけない（けどこれは研究室の意向と反発するように捉えられかねないのでかなり神経を削る．．．）</li>
+<li>しかし，そもそも lambda のエンコードの価値が実はあまりよくわからないから，
+これが最適化されることの意味もよくわからない．</li>
 </ul></li>
 </ul>
 </div>
@@ -514,7 +924,7 @@ lmntal に関して何かやれば，それでもうほぼ新規性が保証さ�
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Jin SANO</p>
-<p class="date">Created: 2021-10-10 Sun 23:21</p>
+<p class="date">Created: 2021-10-12 Tue 17:17</p>
 <p class="validation"><a href="https://validator.w3.org/check?uri=referer">Validate</a></p>
 </div>
 </body>
