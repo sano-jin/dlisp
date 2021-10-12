@@ -10,7 +10,7 @@
 
 (package
  (name dlisp)
- (synopsis "dlisp")
+ (synopsis "DLisp")
  (description "A minimal interpreter of DLisp")
  (depends
   ; (ounit :with-test)
@@ -18,5 +18,6 @@
   ; (patdiff (>= 0.14.0))
   (dune (> 1.5))
   (odoc (>= 1.5.3))
+  unionFind
   ))
 (using menhir 2.1)

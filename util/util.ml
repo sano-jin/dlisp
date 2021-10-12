@@ -17,9 +17,6 @@ module ResultExtra = Result_extra
 module DebugPrint = Debug_print
 (** load functions for debug printing *)
 
-module UnionFind = Union_find
-(** load a module for union find *)
-
 (** その他の共用関数 *)
 
 (** 入出力のための関数 *)

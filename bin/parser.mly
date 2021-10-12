@@ -68,23 +68,32 @@ exp:
       (*
       let init_nil = Cons (Atom "root", nil_ref) in
       *)
+      let id = unique () in
+      let union_find = UnionFind.make id in
       let init_nil = Cons (Atom "root", nil_ref) in
       DList (dlist_of_list $2 nil_ref, nil_ref,
-             ref @@ Main (unique (), (nil_ref, init_nil), None))
+             ref @@ Main (id, (nil_ref, init_nil), None),
+             union_find)
     }
 
   | LPAREN RPAREN
     { let nil_ref = ref Nil in
       let init_nil = Cons (Atom "root", nil_ref) in
+      let id = unique () in
+      let union_find = UnionFind.make id in
       DList (nil_ref, nil_ref,
-             ref @@ Main (unique (), (nil_ref, init_nil), None))
+             ref @@ Main (id, (nil_ref, init_nil), None),
+             union_find)
     }
 
   | QUOTE exp
     { let nil_ref = ref Nil in
       let init_nil = Cons (Atom "root", nil_ref) in
+      let id = unique () in
+      let union_find = UnionFind.make id in
       DList (dlist_of_list [Atom "quote"; $2] nil_ref, nil_ref,
-             ref @@ Main (unique (), (nil_ref, init_nil), None))
+             ref @@ Main (id, (nil_ref, init_nil), None),
+             union_find)
     }
 ;
 

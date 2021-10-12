@@ -5,8 +5,8 @@ open Util.ListExtra
 (** value *)
 type value =
   | Atom of string  (** variable e.g. x *)
-  | DList of node ref * node ref * history_node ref
-      (** DList (head_ref, tail_ref, history_ref) *)
+  | DList of node ref * node ref * history_node ref * int UnionFind.elem
+      (** DList (head_ref, tail_ref, history_ref, union_find) *)
   | Number of int  (** integer value e.g. 17 *)
   | Bool of bool  (** boolean value e.g. true *)
   | Closure of string list * value * env  (** closure *)
@@ -23,7 +23,7 @@ and env = (string * value ref) list ref
 
 let rec string_of_value = function
   | Atom atom -> atom
-  | DList (node_ref, _, _) ->
+  | DList (node_ref, _, _, _) ->
       "(" ^ String.concat " " (strings_of_node !node_ref) ^ ")"
   | Number number -> string_of_int number
   | Bool bool -> string_of_bool bool
@@ -80,7 +80,7 @@ let rec list_of_node_ref node_ref =
 
 (** 値が DList だった場合に，OCaml リストに変換して返す．  *)
 let extract_dlist = function
-  | DList (head_ref, _, _) -> list_of_node_ref head_ref
+  | DList (head_ref, _, _, _) -> list_of_node_ref head_ref
   | value ->
       failwith @@ "TypeError: " ^ string_of_value value
       ^ " is expected to be a dlist"
