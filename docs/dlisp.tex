@@ -1,4 +1,4 @@
-% Created 2021-10-12 Tue 21:39
+% Created 2021-10-15 Fri 19:22
 % Intended LaTeX compiler: pdflatex
 \documentclass[10pt, a4j, twocolumn]{scrartcl}
                \usepackage{amsmath}
@@ -43,143 +43,54 @@
 \begin{document}
 
 \maketitle
-\tableofcontents
-
-\vspace{1em}
-
-\textbf{\textbf{TODO}} 
-
-\begin{itemize}
-\item 提案書
-\begin{itemize}
-\item 関連研究を載せる
-\item 参考文献を書く（org-mode での書き方がよくわからない）
-\item 提案手法を説明する図を追加する
-\item モチベをもっとクリアにする
-\end{itemize}
-
-\item 実装
-\begin{itemize}
-\item 実装の容易さのために一度 OCaml のリストに変換してから評価しているので，
-差分リストのまま扱うようにする
-\item 履歴の最適化（の検討）
-\end{itemize}
-\end{itemize}
 
 
 \section{概要}
-\label{sec:org362503a}
+\label{sec:orgdb67811}
 
-共有されたオブジェクトの破壊的操作を試みる際に，
-事前にオブジェクト全体を複製するのではなく，
+Inplace rewriting を用いたデータの操作は，
+破壊的な手法を用いることのできない場合と比較して，
+時間的にも空間的にも，効率よく出来ることの幅が広がるため，有用である．
+ただし，共有オブジェクトに対して破壊的更新をすると，
+プログラムの純粋性を担保できなくなる．
+所有権解析により，共有を行っていないことを静的に保証することも可能であるが，
+強い制約によりプログラミングの容易さを損なう可能性がある．
+純粋さを担保するために，
+破壊的更新を行う際は必ずオブジェクト全体を複製してから行うことにする方法も考えられるが，
+これはオブジェクトの大きさに比例したコストがかかり，非効率である．
+そこで，所有権解析に通らなかった共有される可能性のあるオブジェクトは，
+破壊的操作を試みる際に，
 操作の履歴を発行することで，
 過去の状態を復元できる手段を残しながら，
 最新のオブジェクトを手にいれるコストを最小化する手法を提案する．
-
 この手法が顕著に活かせる例として，
 アトムと差分リストのみからなる Lisp 派生言語 DLisp を実装した．
-DLisp は append が \(O(1)\) で可能である
-（より正確には（リストの長さではなく）append の回数のアッカーマン関数の逆関数だが，
+DLisp はリスト末尾を破壊的に更新することで append が \(O(1)\) で可能である
+（より正確にはアッカーマン関数の逆関数のオーダだが，
 これは多くの場合静的解析で削減可能と考えられる）．
 
 
 \section{導入}
-\label{sec:orga4e8695}
+\label{sec:orgf37451e}
 
-\subsection{背景}
-\label{sec:org7cb7ed8}
+既存の言語では，基本的には「後で元のオブジェクトも使うかもしれないとき」は，
+事前にそのオブジェクト全体を複製する．
+特に，関数型言語，スクリプト系，ground を用いた LMNtal など．
+しかし，それにはオブジェクトの大きさに比例したコストがかかる．
+しかも，後で「使うかもしれない」ということは使わない可能性もある．
 
-\subsubsection{既存の（言語における）手法}
-\label{sec:org70725fb}
-
-従来のプログラミング言語におけるデータの持ち方の考え方
-\begin{description}
-\item[{C/C++ などの古典的な手続き型言語}] 破壊的更新が標準
-\begin{itemize}
-\item \texttt{const} が明示的に記述されていないと破壊的更新の可能性を否定できない
-\item 共有されているオブジェクトでもお構いなしに破壊的更新を行う
-\item どうしても「元のオブジェクト」が欲しくなる場合は，ユーザが明示的にその実装を行う必要がある
-\begin{itemize}
-\item 再帰的にコピーを行う関数を実装するものと思われる
-\end{itemize}
-\end{itemize}
-\item[{Rust などの比較的新しい手続き型言語}] 破壊的更新を行うが，所有権解析により共有されている可能性を排除することもできる
-\begin{itemize}
-\item そもそもオブジェクトの共有自体が推奨されない
-\item 実行効率は良いし安全性も高いが，制限が強すぎて，一部の低レイヤ好きにしか好まれない
-\end{itemize}
-\item[{Python/JavaScript などの比較的新しいスクリプト言語}] 関数型の思想を言語仕様・ライブラリなどでどんどん取り入れている
-\begin{itemize}
-\item 基本的に実行効率はお構いなし
-\item ガンガン複製する
-\end{itemize}
-\item[{関数型言語}] immutable が標準
-\begin{itemize}
-\item append などを行う際は複製を行う必要がある
-\item そもそも append などのコストがかかる作業を避けるプログラムを意識的に書く傾向にある
-\item データ構造をめちゃめちゃ工夫して「償却時間は」\(O(1)\) のアルゴリズムを発明する傾向にある
-\begin{itemize}
-\item \url{https://hackage.haskell.org/package/dlist}
-\item \url{https://wiki.haskell.org/Difference\_list}
-\item \url{https://okmij.org/ftp/Haskell/zseq.pdf}
-\item ただし，あくまで「償却時間」であり，毎回それが保証されるわけではない
-\item 「工夫」はあまり自明でない
-\item 「工夫」のために無駄な中間データ構造を要求する場合が多い
-\begin{itemize}
-\item 定数倍で性能が悪化
-\item メモリの消費（メモリ消費は GC のタイミングを早めるため速度にも影響するはず）
-\end{itemize}
-\end{itemize}
-\end{itemize}
-\item[{論理型言語}] 未具現化変数
-\begin{itemize}
-\item append は一回しかできない
-\item 一度のみ具現化可能というのは Rust の所有権解析と少し似ている
-\end{itemize}
-\item[{LMNtal}] link による強い制約
-\begin{itemize}
-\item link は2頂点を繋ぐことしかできない
-\item hyperlink を用いてデータを共有することもできるが，
-共有物を純粋に保つのが面倒で（共有物を純粋に保たないプログラミングが人類に可能だとは思えない），
-静的な検査もないため，
-めちゃめちゃバグりやすい
-\item 結局 ground を使うことになる
-\begin{itemize}
-\item C などのように再帰を回してオブジェクトを clone するコードを自前で書かなくて良いというメリットはある
-\item が，とてもコストが大きい
-\item のにめちゃめちゃ頻繁に使われている
-\end{itemize}
-\end{itemize}
-\end{description}
-
-
-\subsubsection{提案手法のモチベーションと導入}
-\label{sec:orgf8c442d}
-
-まとめると，既存の言語では，基本的には「後で元のオブジェクトも使うかもしれないとき」は事前にそのオブジェクト全体を複製する
-\begin{itemize}
-\item 関数型言語，スクリプト系，LMNtal (with ground)，\ldots{}
-\end{itemize}
-
-
-しかし，それにはとてもコストがかかる
-\begin{itemize}
-\item オブジェクトの大きさに比例したコスト
-\end{itemize}
-
-
-しかも，後で「使うかもしれない」ということは使わない可能性もある
 
 つまり，既存のパラダイムでは
 \begin{enumerate}
 \item 「事前に莫大なコストを払い」，
-\item 「後で古いものを使うときのコストはゼロ」としていた
+\item 「後で古いものを使うときのコストはゼロ」としていた．
 \end{enumerate}
+
 
 しかし，基本的には \textbf{\textbf{新しいものを使う可能性が高い}} と考えられるので，
 \begin{enumerate}
 \item 「事前のコストは最小化」した上で，
-\item 後で「古いものを使いたくなったら（多少の）コストを払って戻す」ようにしたい
+\item 後で「古いものを使いたくなったら（多少の）コストを払って戻す」ようにしたい．
 \end{enumerate}
 
 
@@ -189,7 +100,7 @@ DLisp は append が \(O(1)\) で可能である
 破壊的更新を行うときは，「破壊的操作の履歴」をコミットすることにする
 \begin{itemize}
 \item このコミットは単にアドレスとそこに代入した値のペアさえあればよく，
-「オブジェクト全体の複製」などよりも遥かに低コストである
+「オブジェクト全体の複製」などよりも遥かに低コストである．
 \end{itemize}
 \item 新しいものを使い続ける場合は上記の履歴のコミット以外のコストは払わない
 \begin{itemize}
@@ -198,49 +109,20 @@ DLisp は append が \(O(1)\) で可能である
 \item 古いものに戻したい場合は，「（多少の）コストを払って復元する」
 \begin{itemize}
 \item 基本的に新しいものを使い続けることの方が多いはずなので，
-\textbf{\textbf{古いものを欲しがる人にコストを払わせる}}
+\textbf{\textbf{古いものを欲しがる人にコストを払わせる}} ．
 \item ただし，このコストはあくまで破壊的更新の回数（append の回数など）であり，
-純粋にできる部分は純粋に保っていたらそこまで大きくはならないはず
+純粋にできる部分は純粋に保っていたらそこまで大きくはならないはず．
 \end{itemize}
 \end{enumerate}
 
 
-\subsection{先行研究}
-\label{sec:org83ac2d1}
-
-要調査
-
-\subsubsection{可逆プログラミング}
-\label{sec:orgb2afb8d}
-\begin{description}
-\item[{Janus}] 低レベルでグラフのようなデータ構造を扱うことまで頭が回っていないように見える（要調査）
-\end{description}
-
-
-\subsubsection{Haskell の DList や高階関数を用いた手法}
-\label{sec:org74b408e}
-\begin{itemize}
-\item Thunk が大量発生するのでメモリ効率が悪い
-\item 正格の場合は head をとるために \(O(n)\) かかる（と思うのだがもっと調べる必要がある）
-\item いづれにせよ，破壊的な接続よりも効率的だとは思えない
-\item また，これらの手法は決して自明ではない
-（グラフへの拡張を考えたときに不利なはず）
-\end{itemize}
-
-
-\subsection{本稿の構成}
-\label{sec:orgf89e8db}
-
-In section \ref{sec:proposal} we briefly introduce the implementation
-
-
 \section{提案手法}
-\label{sec:org10a2421}
+\label{sec:orgee33db9}
 
 \label{sec:proposal}
 
 \subsection{概要}
-\label{sec:orgc1d5d3e}
+\label{sec:orga3e139b}
 
 破壊的更新の履歴を木構造で管理する．
 
@@ -296,9 +178,9 @@ Master stream のノードにする
 
 
 \subsection{実装}
-\label{sec:org99d0e50}
+\label{sec:org2423938}
 
-\lstset{language=Caml,label=orgf06b77a,caption={History node},captionpos=b,numbers=none}
+\lstset{language=Caml,label=org4bf0dee,caption={History node},captionpos=b,numbers=none}
 \begin{lstlisting}
 type history_node =
   | Main of
@@ -313,7 +195,7 @@ type history_node =
 \end{lstlisting}
 
 
-\lstset{language=Caml,label=orga3043cb,caption={Update},captionpos=b,numbers=none}
+\lstset{language=Caml,label=org4b0f9d3,caption={Update},captionpos=b,numbers=none}
 \begin{lstlisting}
 (** Main stream を辿りながら帰りがけに逆実行する．
 辿ってきた node は sub stream 化して逆順につなぐ．
@@ -362,9 +244,9 @@ let update = traverse_history None
 
 
 \section{例題}
-\label{sec:org4380289}
+\label{sec:org3bd138e}
 
-\lstset{language=Lisp,label=org9226724,caption={Append},captionpos=b,numbers=none}
+\lstset{language=Lisp,label=org572162b,caption={Append},captionpos=b,numbers=none}
 \begin{lstlisting}
 ;; ++ は append
 
@@ -409,15 +291,17 @@ let update = traverse_history None
 \end{itemize}
 
 
+
 \section{課題}
-\label{sec:org8d4f06d}
+\label{sec:org7d33c2c}
 
 \subsection{Occur checking}
-\label{sec:org8b2cb51}
+\label{sec:org38c3ce9}
 
-自分自身を含むオブジェクトを連結してしまうと，循環してしまうため（素朴な手法では）評価が無限ループしてしまう．
+自分自身を含むオブジェクトを連結してしまうと，
+循環してしまうため（素朴な手法では）評価が無限ループしてしまう．
 
-\lstset{language=Lisp,label=orgd5f829e,caption={Circle},captionpos=b,numbers=none}
+\lstset{language=Lisp,label=org4c8b681,caption={Circle},captionpos=b,numbers=none}
 \begin{lstlisting}
 (let ((x '(1 2 3)))
   (let ((y (++ x x)))
@@ -450,7 +334,7 @@ Occur checking の（素朴な）実装は Union-find を用いれば良い．
 
 
 \subsection{その他最適化手法}
-\label{sec:orgdce1487}
+\label{sec:org873d1ef}
 \begin{itemize}
 \item 現実装は，すごく安直で，
 全ての操作を逆実行する（Nil（未具現化変数）の更新（具現化）をした部分もわざわざ戻す）が，
@@ -461,8 +345,56 @@ Occur checking の（素朴な）実装は Union-find を用いれば良い．
 \end{itemize}
 
 
+\section{先行研究}
+\label{sec:org09ce0b8}
+
+\subsection{Multiversion concurrency control}
+\label{sec:orgb7ed015}
+
+複数の書き込みに対して一貫性を保つという意味で本手法とは逆の関係にあると考える．
+提案手法では，データの一貫性を保つのではなく，
+それぞれが自分の持っているバージョンにアクセスできるようにする．
+
+
+\subsection{可逆プログラミング}
+\label{sec:orgd0ceffd}
+
+\begin{description}
+\item[{Janus}] 低レベルでグラフのようなデータ構造を扱うことまで頭が回っていないように見える
+\end{description}
+
+
+\subsection{Haskell の DList など}
+\label{sec:org5e67e0d}
+
+Haskell などの関数型言語には，差分リストを「シミュレート」するための手法が存在している．
+このように，関数型言語ではデータ構造とその操作をめちゃめちゃ工夫して「償却時間は」\(O(1)\) のアルゴリズムを発明する傾向にある
+\begin{itemize}
+\item \url{https://hackage.haskell.org/package/dlist}
+\item \url{https://wiki.haskell.org/Difference\_list}
+\item \url{https://okmij.org/ftp/Haskell/zseq.pdf}
+\item ただし，あくまで「償却時間」であり，毎回それが保証されるわけではない
+\item 「工夫」はあまり自明でない
+\item 「工夫」のために無駄な中間データ構造を要求する場合が多い
+\begin{itemize}
+\item 定数倍で性能が悪化
+\item メモリの消費（メモリ消費は GC のタイミングを早めるため速度にも影響するはず）
+\end{itemize}
+\end{itemize}
+
+
+高階関数を用いた差分リストの場合は，
+\begin{itemize}
+\item Thunk が大量発生するのでメモリ効率が悪い
+\item 正格の場合は head をとるために \(O(n)\) かかる（と思うのだがもっと調べる必要がある）
+\item いづれにせよ，破壊的な接続よりも効率的だとは思えない
+\item また，これらの手法は決して自明ではない
+（一般のグラフへの拡張は少なくとも著者には無理に思える）
+\end{itemize}
+
+
 \section{まとめ}
-\label{sec:org42fc826}
+\label{sec:orgd2f89a9}
 
 共有されたオブジェクトの破壊的操作を試みる際に，
 事前にオブジェクト全体を複製するのではなく，
@@ -473,113 +405,4 @@ Occur checking の（素朴な）実装は Union-find を用いれば良い．
 この手法が顕著に活かせる例として，
 アトムと差分リストのみからなる Lisp 派生言語 DLisp を実装した．
 DLisp は append が \(O(1)\) で可能である（より正確にはアッカーマン関数の逆関数）．
-
-
-
-
-\section{メモ}
-\label{sec:org8017134}
-
-差分リストはリストよりも強力なデータ構造
-\begin{itemize}
-\item append が \(O(1)\) でできる
-\item 他の操作はリストと同等
-\end{itemize}
-
-
-ただし，差分リストの append
-
-
-\section{2021/10/10}
-\label{sec:org63b770d}
-
-提案手法は，単に共有物に対して破壊的操作を行っている場合は履歴を保持するというだけ．
-\begin{itemize}
-\item つまり，これはグラフに限らず，例えば配列などに対しても適用可能ではある．
-\item ただし，配列はめちゃめちゃ破壊的操作を行うため，
-履歴が大量発生する＆戻すのに操作の数だけ逆操作するため，あんまり嬉しくはない．
-\item （単方向の）差分リスト（もどき）が嬉しいのは，
-「末尾の破壊的更新」しかできないということであった．
-\begin{itemize}
-\item 末尾の破壊的更新以外は純粋にできるため，それらの履歴の保持が不要であり，
-「履歴のコストが比較的小さい」というメリットがあった．
-\item これは先週の段階ではぼんやりとしか理解していなかった（ので説明ができなかった）
-\item こう言った性質をグラフ（の shapetype のような型）において自動的に導出できるのかは不明．
-\item 双方向リストにしてしまうと，Head に cons するだけでも破壊的更新をする必要があり，
-この履歴も管理せざるを得なくなるため，履歴のコストが無視できなくなる（かも）
-\item 現実装は，すごく安直で，全ての操作を逆実行する（Nil（未具現化変数）の更新（具現化）をした部分もわざわざ戻す）が，
-こういった部分に関しても差分リストの場合は最適化が可能
-\begin{itemize}
-\item 現実装は一般のグラフへの適用を考えた（差分リストに最適化されていない）素朴な手法
-\end{itemize}
-\item 差分リストの場合は move 可能な部分は履歴を管理する必要がないというのが僕の直感的な理解
-（あまりきちんと説明できないのでちゃんと例題を書く必要がある）
-\begin{itemize}
-\item ただし，一般のデータ構造に対してはこれは保証できないことに気づいた
-（配列の破壊的代入など）
-\end{itemize}
-\end{itemize}
-\end{itemize}
-
-
-まとめると，
-\begin{itemize}
-\item 提案手法が差分リスト（もどき）において有効なのはほぼ確信している．
-\begin{itemize}
-\item これをあまり理解してもらえなかったのは純粋に説明が悪かったのだと思う．
-\end{itemize}
-\item 提案手法がより一般のグラフにおいて最適化可能なのかはよくわからない．
-\begin{itemize}
-\item 操作の数だけ復元にコストがかかる可能性がある．
-\end{itemize}
-\item が，仮に最適化できなかったとしても，「純粋（風に）にグラフ（破壊的データ構造）を扱う」という
-「今まで人類ができなかったこと（調べ学習が足りていない感はある）」を実現しているのでこれは価値があると思っている．
-\begin{itemize}
-\item つまり，「今までできていたことをより良くする研究」ではないということ．
-\end{itemize}
-\item 提案手法が一般にはコストゼロで途中の move と組み合わせられない
-（move できる部分は履歴の保持がいらないというのは一般には保証できない）のは痛手であったが，
-所有権解析を取り入れている言語は「徹頭徹尾」move させるようにしているので，
-途中の move があまり最適でないというのは仕方のないことだと言える．
-\begin{itemize}
-\item ただし，差分リストの場合はこれがおそらく可能で，
-どういうパターンのときにそうなるのかはもっと考える必要がある（考える価値があると思う）
-\end{itemize}
-\end{itemize}
-
-
-（木だけではなく）グラフ（特に差分リスト）を扱うメリット：
-\begin{itemize}
-\item グラフを扱えるとより時間効率の良い実装ができる場合がある．
-\begin{itemize}
-\item キューなど
-\item 末尾再帰化してループへ変換できる関数がある．
-\end{itemize}
-\item グラフを扱えるとより空間効率の良い実装ができる場合がある．
-\begin{itemize}
-\item 従来の append は第一引数のリストを複製するため，その分メモリを消費する．
-\item 末尾再帰化可能でない関数はスタックを消費する．
-\end{itemize}
-\item グラフを扱えるとより直感的に記述できる可能性がある．
-\begin{itemize}
-\item キュー．2本スタックを用意するのはすごく直感的というわけではない．
-\end{itemize}
-\end{itemize}
-
-
-そもそも所有権解析により，常に move させるようにするのではダメなのか？
-\begin{itemize}
-\item 常に move させるのでは困るという明確な例題は正直あまり思い付いていない．
-\item だが，例えば python ユーザに所有権解析を押し付けるのはどうかと思う．
-\begin{itemize}
-\item という非形式的な感想しかないと言われればそこまで．
-\end{itemize}
-\item alim さんの ground を用いた hypergraph による lambda も ground を用いていて，
-しかもラムダ式は木にちょっと毛が生えたくらいだから提案手法で（効率的に）扱えないと困る．
-\begin{itemize}
-\item この場合，ground のように丸々コピーするよりも遥かに安価である（あって欲しい）
-\item しかし，そもそも lambda のエンコードの価値が実はあまりよくわからないから，
-これが最適化されることの意味もよくわからない．
-\end{itemize}
-\end{itemize}
 \end{document}
