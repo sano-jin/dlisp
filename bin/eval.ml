@@ -13,19 +13,21 @@ let rec eval env = function
         | None -> failwith @@ "variable " ^ id ^ " not found"
       in
       (match value with
-      | DList (_, _, history_ref, union_find) as this_dlist ->
+      | DList (_, _, history_ref, _) ->
           (* 差分リストだった場合は履歴を更新する *)
-          prerr_endline @@ "    >>> " ^ id ^ " = ";
-          prerr_endline @@ "    >>>   updating: "
-          ^ string_of_history history_ref;
-
-          update history_ref;
-
-          prerr_endline @@ "    >>>   updated : "
-          ^ string_of_history history_ref;
-          prerr_endline @@ "    >>>   ---> "
-          ^ string_of_int (UnionFind.get union_find)
-          ^ ": " ^ string_of_value this_dlist
+          (*
+             prerr_endline @@ "    >>> " ^ id ^ " = ";
+             prerr_endline @@ "    >>>   updating: "
+             ^ string_of_history history_ref;
+          *)
+          update history_ref
+      (*
+         prerr_endline @@ "    >>>   updated : "
+         ^ string_of_history history_ref;
+         prerr_endline @@ "    >>>   ---> "
+         ^ string_of_int (UnionFind.get union_find)
+         ^ ": " ^ string_of_value this_dlist
+      *)
       | _ -> ());
       value
   | (Number _ | Bool _ | String _ | Closure _) as value -> value
@@ -155,7 +157,6 @@ let rec eval env = function
       | f :: args -> (
           match eval env f with
           | Closure (vars, body, new_env) ->
-              prerr_endline @@ string_of_value f ^ ".";
               let arg_values = List.map (ref <. eval env) args in
               let new_env = ref (List.combine vars arg_values @ !new_env) in
               eval new_env body

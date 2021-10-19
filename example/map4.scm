@@ -18,7 +18,7 @@
               (lambda (acc lst3)
                 (if (null? lst3)
                     acc
-                  (helper (++ acc (singleton (func (car lst3)))) (cdr lst3))))))
+                  (helper (append acc (singleton (func (car lst3)))) (cdr lst3))))))
           (helper () lst2))))
      (repeat
       (lambda (func x)

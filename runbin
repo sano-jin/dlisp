@@ -1,0 +1,2 @@
+#!/bin/bash
+/Users/sano/work/dlisp/_build/install/default/bin/dlisp $@

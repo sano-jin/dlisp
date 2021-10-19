@@ -1,6 +1,6 @@
-% Created 2021-10-19 Tue 17:51
+% Created 2021-10-19 Tue 17:34
 % Intended LaTeX compiler: pdflatex
-\documentclass[presentation, xetex, 10pt]{beamer}
+\documentclass[presentation, xetex, 8pt]{beamer}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{graphicx}
@@ -33,9 +33,9 @@
 \maketitle
 
 \section{Introduction}
-\label{sec:org4a71c6f}
+\label{sec:orgf1d2e91}
 
-\begin{frame}[label={sec:org74bed06}]{概要}
+\begin{frame}[label={sec:orgcc55546}]{概要}
 Inplace rewriting を用いたデータの操作は，
 破壊的な手法を用いることのできない場合と比較して，
 時間的にも空間的にも，効率よく出来ることの幅が広がるため，有用である．
@@ -45,13 +45,13 @@ Inplace rewriting を用いたデータの操作は，
 
 所有権解析により，共有を行っていないことを静的に保証することも可能であるが，
 強い制約によりプログラミングの容易さを損なう可能性がある．
+\end{frame}
 
+\begin{frame}[label={sec:org1aec0f5}]{概要}
 純粋さを担保するために，
 破壊的更新を行う際は必ずオブジェクト全体を複製してから行うことにする方法も考えられるが，
 これはオブジェクトの大きさに比例したコストがかかり，非効率である．
-\end{frame}
 
-\begin{frame}[label={sec:orgd994505}]{概要}
 そこで，所有権解析に通らなかった共有される可能性のあるオブジェクトは，
 破壊的操作を試みる際に，
 操作の履歴を発行することで，
@@ -67,7 +67,7 @@ DLisp はリスト末尾を破壊的に更新することで append が \(O(1)\)
 \end{frame}
 
 
-\begin{frame}[label={sec:org4314e6f}]{導入}
+\begin{frame}[label={sec:org39fbeda}]{導入}
 既存の言語では，基本的には「後で元のオブジェクトも使うかもしれないとき」は，
 事前にそのオブジェクト全体を複製する．
 特に，関数型言語，スクリプト系，ground を用いた LMNtal など．
@@ -113,11 +113,11 @@ DLisp はリスト末尾を破壊的に更新することで append が \(O(1)\)
 
 
 \section{提案手法}
-\label{sec:org9fba332}
+\label{sec:org46b93a7}
 
 \label{sec:proposal}
 
-\begin{frame}[label={sec:orgfe15f7b}]{概要}
+\begin{frame}[label={sec:org24e07f8}]{概要}
 破壊的更新の履歴を木構造で管理する．
 
 欲しいオブジェクトに対応する葉と
@@ -172,8 +172,8 @@ Master stream のノードにする
 \end{frame}
 
 
-\begin{frame}[label={sec:orgb9fa532},fragile]{実装}
- \lstset{language=Caml,label=org530003f,caption={History node},captionpos=b,numbers=none}
+\begin{frame}[label={sec:org62231e2},fragile]{実装}
+ \lstset{language=Caml,label=org3d57e69,caption={History node},captionpos=b,numbers=none}
 \begin{lstlisting}
 type history_node =
   | Main of
@@ -188,7 +188,7 @@ type history_node =
 \end{lstlisting}
 
 
-\lstset{language=Caml,label=org2c5fea5,caption={Update},captionpos=b,numbers=none}
+\lstset{language=Caml,label=org13d6308,caption={Update},captionpos=b,numbers=none}
 \begin{lstlisting}
 (** Main stream を辿りながら帰りがけに逆実行する．
 辿ってきた node は sub stream 化して逆順につなぐ．
@@ -238,9 +238,9 @@ let update = traverse_history None
 
 
 \section{例題}
-\label{sec:org9cd2338}
+\label{sec:org08ace7c}
 
-\lstset{language=Lisp,label=orgf7cf539,caption={Append},captionpos=b,numbers=none}
+\lstset{language=Lisp,label=orgc482f3d,caption={Append},captionpos=b,numbers=none}
 \begin{lstlisting}
 ;; ++ は append
 
@@ -287,13 +287,13 @@ let update = traverse_history None
 
 
 \section{課題}
-\label{sec:org84fc863}
+\label{sec:org05147ff}
 
-\begin{frame}[label={sec:orgfed642c},fragile]{Occur checking}
+\begin{frame}[label={sec:org0225ece},fragile]{Occur checking}
  自分自身を含むオブジェクトを連結してしまうと，
 循環してしまうため（素朴な手法では）評価が無限ループしてしまう．
 
-\lstset{language=Lisp,label=org6d65f3a,caption={Circle},captionpos=b,numbers=none}
+\lstset{language=Lisp,label=org4c94ff1,caption={Circle},captionpos=b,numbers=none}
 \begin{lstlisting}
 (let ((x '(1 2 3)))
   (let ((y (++ x x)))
@@ -326,7 +326,7 @@ Occur checking の（素朴な）実装は Union-find を用いれば良い．
 \end{frame}
 
 
-\begin{frame}[label={sec:org9a5334d}]{その他最適化手法}
+\begin{frame}[label={sec:org49d0ce2}]{その他最適化手法}
 \begin{itemize}
 \item 現実装は，すごく安直で，
 全ての操作を逆実行する（Nil（未具現化変数）の更新（具現化）をした部分もわざわざ戻す）が，
@@ -339,23 +339,23 @@ Occur checking の（素朴な）実装は Union-find を用いれば良い．
 
 
 \section{関連研究}
-\label{sec:org09a8d14}
+\label{sec:org618fc6d}
 
-\begin{frame}[label={sec:org8b281f9}]{Multiversion concurrency control}
+\begin{frame}[label={sec:orgab68679}]{Multiversion concurrency control}
 複数の書き込みに対して一貫性を保つという意味で本手法とは逆の関係にあると考える．
 提案手法では，データの一貫性を保つのではなく，
 それぞれが自分の持っているバージョンにアクセスできるようにする．
 \end{frame}
 
 
-\begin{frame}[label={sec:orgad717aa}]{可逆プログラミング}
+\begin{frame}[label={sec:org3215234}]{可逆プログラミング}
 \begin{description}
 \item[{Janus}] 低レベルでグラフのようなデータ構造を扱うことまで頭が回っていないように見える
 \end{description}
 \end{frame}
 
 
-\begin{frame}[label={sec:org226858f}]{Haskell の DList など}
+\begin{frame}[label={sec:org6b94f3e}]{Haskell の DList など}
 Haskell などの関数型言語には，差分リストを「シミュレート」するための手法が存在している．
 このように，関数型言語ではデータ構造とその操作をめちゃめちゃ工夫して「償却時間は」\(O(1)\) のアルゴリズムを発明する傾向にある
 \begin{itemize}
@@ -384,7 +384,7 @@ Haskell などの関数型言語には，差分リストを「シミュレート
 
 
 \section{まとめ}
-\label{sec:org35dad28}
+\label{sec:org549683e}
 
 共有されたオブジェクトの破壊的操作を試みる際に，
 事前にオブジェクト全体を複製するのではなく，
