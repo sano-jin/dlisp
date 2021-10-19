@@ -66,26 +66,34 @@
 % The references should be written in the "ref.bib".
 \addbibresource{ref.bib} 
 
+% The references should be written in the "ref.bib".
+\addbibresource{ref.bib} 
+
+% You need this to read our theme from the same directory.
+\makeatletter
+  \def\beamer@calltheme#1#2#3{%
+    \def\beamer@themelist{#2}
+    \@for\beamer@themename:=\beamer@themelist\do
+    {\usepackage[{#1}]{\beamer@themelocation/#3\beamer@themename}}}
+  \def\usefolder#1{
+    \def\beamer@themelocation{#1}
+  }
+  \def\beamer@themelocation{}
+
+% We are using the theme "crystalline" (my own theme) from the "theme" directory.
+\usefolder{/Users/sano/work/express-beamer/theme}
+
+% Here is the theme "crystalline".
+% We have defined the "maincolor" and the "accentcolor" here.
+% If you like, it maybe a good habit only to use these colors
+% to create a sense of unity.
+\usetheme{express} 
 
 
-\usepackage[margin=0.5in]{geometry}
-
-% \usepackage{geometry}
-% \geometry{
-%   a4paper,
-% %  total = {170mm,257mm},
-%   left  = 10mm,
-%   top   = 10mm,
-% }
-% 
-
-
-\parindent=10pt
-\setlength{\leftmargin}{5pt}
 
 
 \usepackage{listings}
-\definecolor{codebg}{gray}{0.95}
+\definecolor{codebg}{gray}{0.85}
 \lstset{
   backgroundcolor=\color{codebg},
   basicstyle={\ttfamily\small},
@@ -105,4 +113,6 @@
 %   numbersep=1zw,
 %   lineskip=-1.5ex
 }
+
+
 
