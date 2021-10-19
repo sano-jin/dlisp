@@ -1,5 +1,6 @@
 (** syntax.ml *)
 
+open Util
 open Util.ListExtra
 
 (** value *)
@@ -84,3 +85,11 @@ let extract_dlist = function
   | value ->
       failwith @@ "TypeError: " ^ string_of_value value
       ^ " is expected to be a dlist"
+
+let new_empty_dlist () =
+  let nil_ref = ref Nil in
+  let init_nil = Cons (Atom "root", nil_ref) in
+  let id = unique () in
+  let union_find = UnionFind.make id in
+  DList
+    (nil_ref, nil_ref, ref @@ Main (id, (nil_ref, init_nil), None), union_find)

@@ -29,7 +29,7 @@ let rec eval env = function
       | _ -> ());
       value
   | (Number _ | Bool _ | String _ | Closure _) as value -> value
-  | DList (head_ref, _, history_ref, _) as this_dlist -> (
+  | DList (head_ref, _, history_ref, _) -> (
       (* 履歴を辿って，データを更新 *)
       update history_ref;
 
@@ -42,7 +42,7 @@ let rec eval env = function
         List.fold_left f unit arg_vals
       in
       match list with
-      | [] -> this_dlist
+      | [] -> new_empty_dlist ()
       | Atom "+" :: args -> Number (eval_binop_num ( + ) 0 args)
       | Atom "-" :: arg :: args ->
           Number (extract_number (eval env arg) - eval_binop_num ( + ) 0 args)
@@ -155,6 +155,7 @@ let rec eval env = function
       | f :: args -> (
           match eval env f with
           | Closure (vars, body, new_env) ->
+              prerr_endline @@ string_of_value f ^ ".";
               let arg_values = List.map (ref <. eval env) args in
               let new_env = ref (List.combine vars arg_values @ !new_env) in
               eval new_env body

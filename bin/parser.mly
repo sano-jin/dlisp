@@ -71,14 +71,7 @@ exp:
     }
 
   | LPAREN RPAREN
-    { let nil_ref = ref Nil in
-      let init_nil = Cons (Atom "root", nil_ref) in
-      let id = unique () in
-      let union_find = UnionFind.make id in
-      DList (nil_ref, nil_ref,
-             ref @@ Main (id, (nil_ref, init_nil), None),
-             union_find)
-    }
+    { new_empty_dlist () }
 
   | QUOTE exp
     { let nil_ref = ref Nil in
