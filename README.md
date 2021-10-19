@@ -1,7 +1,7 @@
 # DLisp
 _Experimental_
 
-A pure functional language features *Differential List*.
+A pure functional language features *Difference List*.
 - Do not be confused with an implementation of a Lisp dialect *written in D* (This is written in OCaml).
 
 
