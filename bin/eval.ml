@@ -39,16 +39,25 @@ let rec eval env = function
          tail_ref の情報は用いずに，Nil まで辿っている
       *)
       let list = list_of_node_ref head_ref in
-      let eval_binop_num f unit args =
-        let arg_vals = List.map (extract_number <. eval env) args in
+      let eval_num = extract_number <. eval env in
+      let eval_binop_nums f unit args =
+        let arg_vals = List.map eval_num args in
         List.fold_left f unit arg_vals
       in
+      let eval_binop_num f x y = f (eval_num x) (eval_num y) in
+      let eval_binop f x y = f (eval env x) (eval env y) in
       match list with
       | [] -> new_empty_dlist ()
-      | Atom "+" :: args -> Number (eval_binop_num ( + ) 0 args)
+      | Atom "+" :: args -> Number (eval_binop_nums ( + ) 0 args)
       | Atom "-" :: arg :: args ->
-          Number (extract_number (eval env arg) - eval_binop_num ( + ) 0 args)
-      | Atom "*" :: args -> Number (eval_binop_num ( * ) 1 args)
+          Number (extract_number (eval env arg) - eval_binop_nums ( + ) 0 args)
+      | Atom "*" :: args -> Number (eval_binop_nums ( * ) 1 args)
+      | [ Atom "<"; x; y ] -> Bool (eval_binop_num ( < ) x y)
+      | [ Atom ">"; x; y ] -> Bool (eval_binop_num ( > ) x y)
+      | [ Atom "<="; x; y ] -> Bool (eval_binop_num ( <= ) x y)
+      | [ Atom ">="; x; y ] -> Bool (eval_binop_num ( >= ) x y)
+      | [ Atom "="; x; y ] -> Bool (eval_binop ( = ) x y)
+      | [ Atom "!="; x; y ] -> Bool (eval_binop ( <> ) x y)
       | [ Atom "quote"; value ] -> value
       | [ Atom "if"; cond; exp1; exp2 ] -> (
           match eval env cond with
