@@ -1,13 +1,11 @@
 #!/bin/bash
-# slim 性能測定用コード
-# 引数として，測定したいプログラムを受け取る
+# DLisp 性能測定用コード
 # 途中結果は tmp ディレクトリ内にファイルを作ってそこへ書き込む
 
 # エラーが起きた時は終了するようにする
 set -eu
 
 ################################################################################
-# コンパイルオプション，測定したいファイルの場所など
 
 DLISP='/Users/sano/work/dlisp/_build/install/default/bin/dlisp'
 
@@ -32,7 +30,7 @@ mkdir -p tmp
 > tmp/length.txt
 
 ################################################################################
-echo "list length, dlisp, scheme (map with append), schme (default map)" > tmp/result.txt 
+echo "list length, dlisp, scheme (map with append), scheme (default map)" > tmp/result.txt 
 
 for n in $(seq -f "%.0f" 5000 5000 60000); do
     echo $n
