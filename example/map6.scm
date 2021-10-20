@@ -1,15 +1,5 @@
 (letrec
-    ((foldl
-      (lambda (func accum lst)
-        (if (null? lst)
-            accum
-          (foldl func (func accum (car lst)) (cdr lst)))))
-     (foldr
-      (lambda (func end lst1)
-        (if (null? lst1)
-            end
-          (func (car lst1) (foldr func end (cdr lst1))))))
-     (singleton
+    ((singleton
       (lambda (x) (cons x ())))
      (map
       (lambda (func lst2)
@@ -31,5 +21,5 @@
                ))
            (helper 0))))
      )
-  (car (map (lambda (x) (+ x 1)) (generate 30000)))
+  (car (map (lambda (x) (+ x 1)) (generate 50000)))
   )
