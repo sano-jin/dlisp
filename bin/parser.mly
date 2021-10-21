@@ -2,7 +2,6 @@
      
 %{
   open Syntax
-  open Util
 %}
 
 %token <string> ATOM	(* x, y, abc, ... *)
@@ -58,30 +57,13 @@ exp:
     { String $1 }
 
   | LPAREN list_inner RPAREN
-    { let nil_ref = ref Nil in
-      (*
-      let init_nil = Cons (Atom "root", nil_ref) in
-      *)
-      let id = unique () in
-      let union_find = UnionFind.make id in
-      let init_nil = Cons (Atom "root", nil_ref) in
-      DList (dlist_of_list $2 nil_ref, nil_ref,
-             ref @@ Main (id, (nil_ref, init_nil), None),
-             union_find)
-    }
+    { new_dlist $2 }
 
   | LPAREN RPAREN
-    { new_empty_dlist () }
+    { new_dlist [] }
 
   | QUOTE exp
-    { let nil_ref = ref Nil in
-      let init_nil = Cons (Atom "root", nil_ref) in
-      let id = unique () in
-      let union_find = UnionFind.make id in
-      DList (dlist_of_list [Atom "quote"; $2] nil_ref, nil_ref,
-             ref @@ Main (id, (nil_ref, init_nil), None),
-             union_find)
-    }
+    { new_dlist [Atom "quote"; $2] }
 ;
 
 

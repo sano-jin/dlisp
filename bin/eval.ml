@@ -10,10 +10,11 @@ let rec eval env = function
       let value =
         match List.assoc_opt id !env with
         | Some value -> !value
-        | None -> failwith @@ "variable " ^ id ^ " not found"
+        | None ->
+            failwith @@ "variable " ^ id ^ " not found in " ^ string_of_env env
       in
       (match value with
-      | DList (_, _, history_ref, _) ->
+      | DList (_, _, history_ref, _union_find) as _this_dlist ->
           (* 差分リストだった場合は履歴を更新する *)
           (*
              prerr_endline @@ "    >>> " ^ id ^ " = ";
@@ -21,12 +22,13 @@ let rec eval env = function
              ^ string_of_history history_ref;
           *)
           update history_ref
-      (*
-         prerr_endline @@ "    >>>   updated : "
-         ^ string_of_history history_ref;
-         prerr_endline @@ "    >>>   ---> "
-         ^ string_of_int (UnionFind.get union_find)
-         ^ ": " ^ string_of_value this_dlist
+          (*
+          prerr_endline @@ "    >>>   updated : "
+          ^ string_of_history history_ref;
+          prerr_endline @@ "    >>>   ---> "
+          ^ string_of_int (UnionFind.get _union_find)
+          ^ ": "
+          ^ string_of_value _this_dlist
       *)
       | _ -> ());
       value
@@ -47,10 +49,10 @@ let rec eval env = function
       let eval_binop_num f x y = f (eval_num x) (eval_num y) in
       let eval_binop f x y = f (eval env x) (eval env y) in
       match list with
-      | [] -> new_empty_dlist ()
+      | [] -> new_dlist []
       | Atom "+" :: args -> Number (eval_binop_nums ( + ) 0 args)
       | Atom "-" :: arg :: args ->
-          Number (extract_number (eval env arg) - eval_binop_nums ( + ) 0 args)
+          Number (eval_num arg - eval_binop_nums ( + ) 0 args)
       | Atom "*" :: args -> Number (eval_binop_nums ( * ) 1 args)
       | [ Atom "<"; x; y ] -> Bool (eval_binop_num ( < ) x y)
       | [ Atom ">"; x; y ] -> Bool (eval_binop_num ( > ) x y)
@@ -134,16 +136,7 @@ let rec eval env = function
                 ^ ": " ^ string_of_value dlist1 ^ " and "
                 ^ string_of_int (UnionFind.get union_find2)
                 ^ ": " ^ string_of_value dlist2;
-                let nil_ref = ref Nil in
-                let init_nil = Cons (Atom "root", nil_ref) in
-                let id = unique () in
-                let union_find = UnionFind.make id in
-                eval env
-                  (DList
-                     ( dlist_of_list [ Atom "append"; list1; list2 ] nil_ref,
-                       nil_ref,
-                       ref @@ Main (id, (nil_ref, init_nil), None),
-                       union_find )))
+                new_dlist [ Atom "append"; list1; list2 ])
               else
                 match !history_ref1 with
                 | Main (id, operation, None) ->
@@ -160,9 +153,9 @@ let rec eval env = function
                 | _ ->
                     failwith
                     @@ "error: expected to be the latest version of the list")
-          | _ ->
-              failwith
-              @@ "both argments are expected to be lists with an append op")
+          | arg1, arg2 ->
+              failwith @@ "expected to be lists: " ^ string_of_value arg1 ^ ", "
+              ^ string_of_value arg2)
       | f :: args -> (
           match eval env f with
           | Closure (vars, body, new_env) ->
